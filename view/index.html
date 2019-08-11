@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+        <title>Edge Forum</title>
+    </head>
+    <body>
+        <span>欢迎访问本论坛：</span>
+        {{ if .Login }}
+        <span>{{.Name}}</span>
+        {{ else }}
+        <a href="/Login">登录</a>
+        <a href="/UserRegist">注册</a>
+        {{ end }}
+    </body>
+<html>

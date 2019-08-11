@@ -2,15 +2,25 @@ package forum
 
 //User UserInfo
 type User struct {
-	ID       uint64
-	UserCode string
-	PassWord string
-	UserType int
+	ID         uint64
+	Name       string
+	Account    string
+	PassWord   string
+	SignUpTime int64
+	UserType   int
+	UserState  int
 }
 
 const (
-	//Administrator Administrator
-	Administrator = iota
-	//NormalUser NormalUser
-	NormalUser
+	//UserTypeAdministrator Administrator
+	UserTypeAdministrator = iota
+	//UserTypeNormalUser NormalUser
+	UserTypeNormalUser
+)
+
+const (
+	//UserStateNormal normal
+	UserStateNormal = iota
+	//UserStateLock lock
+	UserStateLock
 )

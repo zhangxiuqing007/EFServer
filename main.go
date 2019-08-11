@@ -1,20 +1,20 @@
 package main
 
 import (
-	"EFServer/dba"
-	"EFServer/forum"
+	"EFServer/controller"
 	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func main() {
-	fmt.Println("hello 世界")
-	//给接口赋值
-	user := &forum.User{
-		ID:       0,
-		UserCode: "zxq",
-		PassWord: "asd   ",
-		UserType: forum.Administrator,
-	}
-	dba.DataOper.AddUser(user)
-	dba.DataOper.DeleteUser(user)
+	fmt.Println("service is starting...")
+	//路由，非表单
+	router := httprouter.New()
+	router.GET("/", controller.Index)
+	router.GET("/UserRegist", controller.UserRegist)
+	router.GET("/Login", controller.Login)
+	log.Fatal(http.ListenAndServe("localhost:8080", router))
 }

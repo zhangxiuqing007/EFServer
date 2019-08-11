@@ -1,2 +1,2 @@
 # EFServer
- edge forum, a golang web web service project for study.
+ edge forum, a golang web service project for study.
