@@ -9,9 +9,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func linkToDb() (db *sql.DB, err error) {
-	db, err = sql.Open("mysql", "root:root123@tcp(127.0.0.1:3306)/efdb?charset=utf8")
-	return
+func linkToMysql() (*sql.DB, error) {
+	return sql.Open("mysql", "root:root123@tcp(127.0.0.1:3306)/efdb?charset=utf8")
 }
 
 //MySQLIns Mysql的IO实现
@@ -19,8 +18,8 @@ type MySQLIns struct {
 }
 
 //AddPost AddPost
-func (m MySQLIns) AddPost(post *forum.Post) error {
-	db, err := linkToDb()
+func (m *MySQLIns) AddPost(post *forum.Post) error {
+	db, err := linkToMysql()
 	if err != nil {
 		return err
 	}
@@ -31,23 +30,23 @@ func (m MySQLIns) AddPost(post *forum.Post) error {
 }
 
 //DeletePost DeletePost
-func (m MySQLIns) DeletePost(post *forum.Post) error {
+func (m *MySQLIns) DeletePost(post *forum.Post) error {
 	return &tool.StrError{ErrorStr: "DeletePost...Not Completed Now!"}
 }
 
 //UpdatePost UpdatePost
-func (m MySQLIns) UpdatePost(post *forum.Post) error {
+func (m *MySQLIns) UpdatePost(post *forum.Post) error {
 	return &tool.StrError{ErrorStr: "UpdatePost...Not Completed Now!"}
 }
 
 //QueryPost QueryPost
-func (m MySQLIns) QueryPost(id uint64) (*forum.Post, error) {
+func (m *MySQLIns) QueryPost(id uint64) (*forum.Post, error) {
 	return nil, &tool.StrError{ErrorStr: "UpdatePost...Not Completed Now!"}
 }
 
 //AddComment AddComment
-func (m MySQLIns) AddComment(cmt *forum.Comment) error {
-	db, err := linkToDb()
+func (m *MySQLIns) AddComment(cmt *forum.Comment) error {
+	db, err := linkToMysql()
 	if err != nil {
 		return err
 	}
@@ -58,18 +57,18 @@ func (m MySQLIns) AddComment(cmt *forum.Comment) error {
 }
 
 //DeleteComment DeleteComment
-func (m MySQLIns) DeleteComment(cmt *forum.Comment) error {
+func (m *MySQLIns) DeleteComment(cmt *forum.Comment) error {
 	return &tool.StrError{ErrorStr: "DeleteComment...Not Completed Now!"}
 }
 
 //UpdateComment UpdateComment
-func (m MySQLIns) UpdateComment(cmt *forum.Comment) error {
+func (m *MySQLIns) UpdateComment(cmt *forum.Comment) error {
 	return &tool.StrError{ErrorStr: "UpdateComment...Not Completed Now!"}
 }
 
 //AddUser AddUser
-func (m MySQLIns) AddUser(user *forum.User) error {
-	db, err := linkToDb()
+func (m *MySQLIns) AddUser(user *forum.User) error {
+	db, err := linkToMysql()
 	if err != nil {
 		return err
 	}
@@ -80,33 +79,33 @@ func (m MySQLIns) AddUser(user *forum.User) error {
 }
 
 //DeleteUser DeleteUser
-func (m MySQLIns) DeleteUser(user *forum.User) error {
+func (m *MySQLIns) DeleteUser(user *forum.User) error {
 	return &tool.StrError{ErrorStr: "DeleteUser...Not Completed Now!"}
 }
 
 //UpdateUser UpdateUser
-func (m MySQLIns) UpdateUser(user *forum.User) error {
+func (m *MySQLIns) UpdateUser(user *forum.User) error {
 	return &tool.StrError{ErrorStr: "UpdateUser...Not Completed Now!"}
 }
 
 //QueryUserByAccountAndPwd QueryUserByAccountAndPwd
-func (m MySQLIns) QueryUserByAccountAndPwd(account string, password string) (*forum.User, error) {
+func (m *MySQLIns) QueryUserByAccountAndPwd(account string, password string) (*forum.User, error) {
 	return nil, &tool.StrError{ErrorStr: "QueryUserByCodeAndPwd...Not Completed Now!"}
 }
 
 //IsUserNameExist IsUserNameExist
-func (m MySQLIns) IsUserNameExist(name string) (bool, error) {
+func (m *MySQLIns) IsUserNameExist(name string) (bool, error) {
 	return m.isUserFieldExsit("name", name)
 }
 
 //IsAccountExist IsAccountExist
-func (m MySQLIns) IsAccountExist(account string) (bool, error) {
+func (m *MySQLIns) IsAccountExist(account string) (bool, error) {
 	return m.isUserFieldExsit("account", account)
 }
 
 //isUserFieldExsit isUserFieldExsit
-func (m MySQLIns) isUserFieldExsit(feild string, patten string) (bool, error) {
-	db, err := linkToDb()
+func (m *MySQLIns) isUserFieldExsit(feild string, patten string) (bool, error) {
+	db, err := linkToMysql()
 	if err != nil {
 		return false, err
 	}

@@ -19,11 +19,11 @@ type loginVM struct {
 
 func readFormDataOfLogin(r *http.Request) (account string, pwd string) {
 	strs := r.Form["account"]
-	if len(strs) != 0 {
+	if strs != nil && len(strs) != 0 {
 		account = strs[0]
 	}
 	strs = r.Form["password"]
-	if len(strs) != 0 {
+	if strs != nil && len(strs) != 0 {
 		pwd = strs[0]
 	}
 	return

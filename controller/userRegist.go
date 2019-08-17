@@ -23,19 +23,19 @@ func UserRegist(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func readFormDataFromRegist(r *http.Request) (name string, account string, pwd1 string, pwd2 string) {
 	strs := r.Form["name"]
-	if len(strs) != 0 {
+	if strs != nil && len(strs) != 0 {
 		name = strs[0]
 	}
 	strs = r.Form["account"]
-	if len(strs) != 0 {
+	if strs != nil && len(strs) != 0 {
 		account = strs[0]
 	}
 	strs = r.Form["password1"]
-	if len(strs) != 0 {
+	if strs != nil && len(strs) != 0 {
 		pwd1 = strs[0]
 	}
 	strs = r.Form["password2"]
-	if len(strs) != 0 {
+	if strs != nil && len(strs) != 0 {
 		pwd2 = strs[0]
 	}
 	return
