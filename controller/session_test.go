@@ -3,5 +3,5 @@ package controller
 import "testing"
 
 func TestSessionManage(t *testing.T) {
-	t.Log("testing function is to do!")
+	t.Error("会话测试程序未完成!")
 }

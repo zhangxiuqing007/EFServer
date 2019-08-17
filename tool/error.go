@@ -1,6 +1,6 @@
 package tool
 
-//StrError base error define
+//StrError 基本的文字型错误
 type StrError struct {
 	ErrorStr string
 }
@@ -9,20 +9,20 @@ func (err StrError) Error() string {
 	return err.ErrorStr
 }
 
-//QueryNoResultError query from db but has no result
+//QueryNoResultError 查询无结果错误
 type QueryNoResultError struct {
-	QueryContent string
+	QueryItem string
 }
 
 func (err QueryNoResultError) Error() string {
-	return err.QueryContent + " query......has no result"
+	return err.QueryItem + "查询失败"
 }
 
-//DataRepeatError has repeat data
+//DataRepeatError 数据重复错误
 type DataRepeatError struct {
-	RepeatContent string
+	RepeatItem string
 }
 
 func (err DataRepeatError) Error() string {
-	return err.RepeatContent + " data is repeat"
+	return err.RepeatItem + "重复"
 }

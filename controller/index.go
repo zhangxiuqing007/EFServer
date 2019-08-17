@@ -10,7 +10,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-var indexTemplate = template.Must(template.New("index").Parse(tool.ReadFileString("view/index.html")))
+var indexTemplate = template.Must(template.New("index").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/index.html"))))
 
 type indexVM struct {
 	Login bool

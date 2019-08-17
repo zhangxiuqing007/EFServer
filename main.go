@@ -2,19 +2,29 @@ package main
 
 import (
 	"EFServer/controller"
+	"EFServer/dba"
+	"EFServer/usecase"
 	"fmt"
-	"log"
 	"net/http"
+	"os"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 func main() {
-	fmt.Println("service is starting...")
-	//路由，非表单
+	fmt.Println("启动程序...")
+	//设置db实现
+	usecase.SetDbInstance(new(dba.Abs))
+	//非表单路由
 	router := httprouter.New()
 	router.GET("/", controller.Index)
 	router.GET("/UserRegist", controller.UserRegist)
+	router.GET("/UserRegistCommit", controller.UserRegistCommit)
 	router.GET("/Login", controller.Login)
-	log.Fatal(http.ListenAndServe("localhost:8080", router))
+	router.GET("/LoginCommit", controller.LoginCommit)
+	err := http.ListenAndServe("localhost:8080", router)
+	if err != nil {
+		fmt.Print("程序启动失败：" + err.Error())
+		os.Exit(0)
+	}
 }

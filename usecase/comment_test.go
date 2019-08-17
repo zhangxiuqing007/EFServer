@@ -1,15 +1,16 @@
 package usecase
 
-import "testing"
-import "github.com/satori/uuid"
+import (
+	"EFServer/tool"
+	"testing"
+)
 
 func TestAddNewCmt(t *testing.T) {
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 5; i++ {
 		newCmt := new(CommentingData)
 		newCmt.UserID = 4
 		newCmt.PostID = 4
-		guidContent, _ := uuid.NewV4()
-		newCmt.Content = guidContent.String() + ": " + getNowTimeStr()
+		newCmt.Content = tool.NewUUID() + ": " + getNowTimeStr()
 		err := AddComment(newCmt)
 		if err != nil {
 			t.Error(err)

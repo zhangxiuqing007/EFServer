@@ -2,18 +2,17 @@ package controller
 
 import (
 	"EFServer/forum"
+	"EFServer/tool"
 	"net/http"
 	"time"
-
-	"github.com/satori/uuid"
 )
 
-const cookie string = "userKey"
+const cookieKey string = "userId"
 
-//SessionDict currentSessions
+//SessionDict 会话map
 var SessionDict = make(map[string]*Session, 20)
 
-//Session Session
+//Session 会话
 type Session struct {
 	UUID            string
 	CreatedTime     int64
@@ -23,8 +22,7 @@ type Session struct {
 
 func createNewSession() *Session {
 	session := new(Session)
-	uid, _ := uuid.NewV4()
-	session.UUID = uid.String()
+	session.UUID = tool.NewUUID()
 	session.CreatedTime = time.Now().UnixNano()
 	session.LastRequestTime = session.CreatedTime
 	session.User = nil
@@ -32,8 +30,8 @@ func createNewSession() *Session {
 	return session
 }
 
-func getExsitSession(r *http.Request) (session *Session) {
-	cook, err := r.Cookie(cookie)
+func getExsitSession(r *http.Request) *Session {
+	cook, err := r.Cookie(cookieKey)
 	if err != nil {
 		return nil
 	}
@@ -49,7 +47,7 @@ func getExsitOrCreateNewSession(w http.ResponseWriter, r *http.Request) *Session
 	if session == nil {
 		session = createNewSession()
 		cook := &http.Cookie{
-			Name:     cookie,
+			Name:     cookieKey,
 			Value:    session.UUID,
 			HttpOnly: true,
 		}

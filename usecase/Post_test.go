@@ -2,16 +2,14 @@ package usecase
 
 import "testing"
 import "time"
-import "github.com/satori/uuid"
+import "EFServer/tool"
 
 func TestAddNewPost(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		newPost := new(PostingData)
-		newPost.UserID = 4
-		guidTitle, _ := uuid.NewV4()
-		newPost.Title = guidTitle.String() + ": " + getNowTimeStr()
-		guidContent, _ := uuid.NewV4()
-		newPost.Content = guidContent.String() + ": " + getNowTimeStr()
+		newPost.UserID = 0
+		newPost.Title = tool.NewUUID() + ": " + getNowTimeStr()
+		newPost.Content = tool.NewUUID() + ": " + getNowTimeStr()
 		err := AddPost(newPost)
 		if err != nil {
 			t.Error(err)

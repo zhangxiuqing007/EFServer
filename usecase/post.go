@@ -1,13 +1,11 @@
 package usecase
 
 import (
-	"EFServer/dba"
 	"EFServer/forum"
 	"time"
 )
 
-//PostingData io data to add new post.
-//this instance is from controller
+//PostingData 新增帖子传输用数据结构，由Controller创建。
 type PostingData struct {
 	UserID  uint64
 	Title   string
@@ -20,31 +18,27 @@ func (data *PostingData) buildPostIns() *forum.Post {
 	post.UserID = data.UserID
 	post.Title = data.Title
 	post.Content = data.Content
+	post.State = forum.PostStateNormal
 	post.CreatedTime = time.Now().UnixNano()
 	post.LastEditTime = post.CreatedTime
 	post.EditTimes = 0
 	post.PraiseTimes = 0
 	post.BelittleTimes = 0
-	post.Comments = make([]forum.Comment, 0, 2)
+	post.Comments = make([]forum.Comment, 0, 0)
 	return post
 }
 
-//AddPost add a new post
-//call by controller
+//AddPost 新增帖子
 func AddPost(data *PostingData) error {
-	//check user authority
-
-	//check post content and title legal
-
-	//build post instance
+	//检查用户存在性、权限、状态
+	//检查帖子标题合法性
+	//检查帖子内容合法性
+	//保存
 	post := data.buildPostIns()
-	//save
-	return dba.DataOper.AddPost(post)
+	return db.AddPost(post)
 }
 
-//QueryPost query a post content
-//call by controller
-func QueryPost(id uint64) (post *forum.Post, err error) {
-	post, err = dba.DataOper.QueryPost(id)
-	return
+//QueryPost 帖子查询
+func QueryPost(id uint64) (*forum.Post, error) {
+	return db.QueryPost(id)
 }
