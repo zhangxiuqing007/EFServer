@@ -7,8 +7,8 @@ import (
 
 //CommentingData 新增评论传输数据结构，只能由Controller来创建
 type CommentingData struct {
-	UserID  uint64
-	PostID  uint64
+	UserID  int64
+	PostID  int64
 	Content string
 }
 

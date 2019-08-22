@@ -7,7 +7,7 @@ import (
 
 //PostingData 新增帖子传输用数据结构，由Controller创建。
 type PostingData struct {
-	UserID  uint64
+	UserID  int64
 	Title   string
 	Content string
 }
@@ -39,6 +39,6 @@ func AddPost(data *PostingData) error {
 }
 
 //QueryPost 帖子查询
-func QueryPost(id uint64) (*forum.Post, error) {
+func QueryPost(id int64) (*forum.Post, error) {
 	return db.QueryPost(id)
 }

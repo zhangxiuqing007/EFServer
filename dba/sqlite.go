@@ -9,26 +9,27 @@ import (
 	_ "github.com/mattn/sqlite3"
 )
 
-//SqliteDbFilePath SqliteDbFilePath
-var SqliteDbFilePath string
-
-func linkToSqlite() (*sql.DB, error) {
-	return sql.Open("sqlite3", SqliteDbFilePath)
-}
-
 //SqliteIns sqlite实现
 type SqliteIns struct {
+	db *sql.DB
+}
+
+//Open 打开
+func (s *SqliteIns) Open(dbFilePath string) error {
+	var err error
+	s.db, err = sql.Open("sqlite3", dbFilePath)
+	return err
+}
+
+//Close 关闭
+func (s *SqliteIns) Close() error {
+	return s.db.Close()
 }
 
 //AddPost AddPost
 func (s *SqliteIns) AddPost(post *forum.Post) error {
-	db, err := linkToSqlite()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
 	sqlStr := "insert into post (userID,state,title,content,createdTime,lastEditTime,editTimes,praiseTimes,belittleTimes) values (?,?,?,?,?,?,?,?,?)"
-	_, err = db.Exec(sqlStr, post.UserID, post.State, post.Title, post.Content, post.CreatedTime, post.LastEditTime, post.EditTimes, post.PraiseTimes, post.BelittleTimes)
+	_, err := s.db.Exec(sqlStr, post.UserID, post.State, post.Title, post.Content, post.CreatedTime, post.LastEditTime, post.EditTimes, post.PraiseTimes, post.BelittleTimes)
 	return err
 }
 
@@ -43,19 +44,14 @@ func (s *SqliteIns) UpdatePost(post *forum.Post) error {
 }
 
 //QueryPost QueryPost
-func (s *SqliteIns) QueryPost(id uint64) (*forum.Post, error) {
+func (s *SqliteIns) QueryPost(id int64) (*forum.Post, error) {
 	return nil, nil
 }
 
 //AddComment AddComment
 func (s *SqliteIns) AddComment(cmt *forum.Comment) error {
-	db, err := linkToSqlite()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
 	sqlStr := "insert into comment (userID,state,postID,content,createdTime,lastEditTime,editTimes,praiseTimes,belittleTimes) values (?,?,?,?,?,?,?,?,?)"
-	_, err = db.Exec(sqlStr, cmt.UserID, cmt.State, cmt.PostID, cmt.Content, cmt.CreatedTime, cmt.LastEditTime, cmt.EditTimes, cmt.PraiseTimes, cmt.BelittleTimes)
+	_, err := s.db.Exec(sqlStr, cmt.UserID, cmt.State, cmt.PostID, cmt.Content, cmt.CreatedTime, cmt.LastEditTime, cmt.EditTimes, cmt.PraiseTimes, cmt.BelittleTimes)
 	return err
 }
 
@@ -69,15 +65,15 @@ func (s *SqliteIns) UpdateComment(comment *forum.Comment) error {
 	return nil
 }
 
+//QueryComment QueryComment
+func (s *SqliteIns) QueryComment(id int64) (*forum.Comment, error) {
+	return nil, nil
+}
+
 //AddUser AddUser
 func (s *SqliteIns) AddUser(user *forum.User) error {
-	db, err := linkToSqlite()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
 	sqlStr := "insert into user (name,account,password,signUpTime,userType,state) values (?,?,?,?,?,?)"
-	_, err = db.Exec(sqlStr, user.Name, user.Account, user.PassWord, user.SignUpTime, user.UserType, user.UserState)
+	_, err := s.db.Exec(sqlStr, user.Name, user.Account, user.PassWord, user.SignUpTime, user.UserType, user.UserState)
 	return err
 }
 
@@ -93,51 +89,25 @@ func (s *SqliteIns) UpdateUser(user *forum.User) error {
 
 //QueryUserByAccountAndPwd QueryUserByAccountAndPwd
 func (s *SqliteIns) QueryUserByAccountAndPwd(account string, password string) (*forum.User, error) {
-	db, err := linkToSqlite()
+	row := s.db.QueryRow("select * from user where account = ? and password = ?", account, password)
+	user := new(forum.User)
+	err := row.Scan(&user.ID, &user.Name, &user.Account, &user.PassWord, &user.SignUpTime, &user.UserType, &user.UserState)
 	if err != nil {
-		return nil, err
+		return nil, tool.ErrQueryNoResult{QueryItem: "用户"}
 	}
-	defer db.Close()
-	rows, err := db.Query("select * from user where account = ? and password = ?", account, password)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	if rows.Next() {
-		user := new(forum.User)
-		err = rows.Scan(&user.ID, &user.Name, &user.Account, &user.PassWord, &user.SignUpTime, &user.UserType, &user.UserState)
-		if err != nil {
-			return nil, err
-		}
-		return user, nil
-	}
-	return nil, tool.QueryNoResultError{QueryItem: "账号"}
+	return user, nil
 }
 
 //IsUserNameExist IsUserNameExist
-func (s *SqliteIns) IsUserNameExist(name string) (bool, error) {
-	return s.isUserFieldExsit("name", name)
+func (s *SqliteIns) IsUserNameExist(name string) bool {
+	row := s.db.QueryRow("select ID from user where name = ?", name)
+	err := row.Scan(new(int64))
+	return err == nil
 }
 
-//IsAccountExist IsAccountExist
-func (s *SqliteIns) IsAccountExist(account string) (bool, error) {
-	return s.isUserFieldExsit("account", account)
-}
-
-//isUserFieldExsit isUserFieldExsit
-func (s *SqliteIns) isUserFieldExsit(feild string, patten string) (bool, error) {
-	db, err := linkToSqlite()
-	if err != nil {
-		return false, err
-	}
-	defer db.Close()
-	rows, err := db.Query("select ID from user where ? = ?", feild, patten)
-	defer rows.Close()
-	if err != nil {
-		return false, err
-	}
-	if rows.Next() {
-		return true, nil
-	}
-	return false, nil
+//IsUserAccountExist IsUserAccountExist
+func (s *SqliteIns) IsUserAccountExist(account string) bool {
+	row := s.db.QueryRow("select ID from user where account = ?", account)
+	err := row.Scan(new(int64))
+	return err == nil
 }

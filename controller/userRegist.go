@@ -1,20 +1,11 @@
 package controller
 
 import (
-	"EFServer/tool"
 	"EFServer/usecase"
-	"html/template"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 )
-
-var userRegistInputTemplate = template.Must(template.New("regist").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/registInput.html"))))
-var userRegistSuccessTemplate = template.Must(template.New("regist").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/registSuccess.html"))))
-
-type registInputVM struct {
-	Tip string
-}
 
 //UserRegist 新用户注册
 func UserRegist(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

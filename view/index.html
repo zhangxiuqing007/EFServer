@@ -6,8 +6,8 @@
     </head>
     <body>
         <span>欢迎访问本论坛：</span>
-        {{ if .Login }}
-        <span>{{ .Name }}</span>
+        {{ if .IsLogin }}
+        <span>{{ .UserName }}</span>
         <a href="/Exit">注销</a>
         {{ else }}
         <a href="/Login">登录</a>

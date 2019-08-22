@@ -13,10 +13,16 @@ import (
 
 func main() {
 	fmt.Println("启动程序...")
-	//设置db实现
-	dba.SqliteDbFilePath = "ef.db"
-	usecase.SetDbInstance(new(dba.SqliteIns))
-	//非表单路由
+	//db实现
+	sqlIns := new(dba.SqliteIns)
+	err := sqlIns.Open("ef.db")
+	if err != nil {
+		panic(err)
+	}
+	defer sqlIns.Close()
+	usecase.SetDbInstance(sqlIns)
+
+	//URL路由
 	router := httprouter.New()
 	router.GET("/", controller.Index)
 	router.GET("/UserRegist", controller.UserRegist)
@@ -24,7 +30,7 @@ func main() {
 	router.GET("/Login", controller.Login)
 	router.GET("/LoginCommit", controller.LoginCommit)
 	router.GET("/Exit", controller.Exit)
-	err := http.ListenAndServe("localhost:8080", router)
+	err = http.ListenAndServe("localhost:8080", router)
 	if err != nil {
 		fmt.Print("程序启动失败：" + err.Error())
 		os.Exit(0)

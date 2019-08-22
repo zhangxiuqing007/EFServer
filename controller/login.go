@@ -3,19 +3,11 @@ package controller
 import (
 	"net/http"
 
-	"EFServer/tool"
 	"EFServer/usecase"
-	"html/template"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
-
-var loginInputTemplate = template.Must(template.New("login").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/loginInput.html"))))
-var loginSuccessTemplate = template.Must(template.New("login").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/loginSuccess.html"))))
-
-type loginVM struct {
-	Tip string
-}
 
 func readFormDataOfLogin(r *http.Request) (account string, pwd string) {
 	strs := r.Form["account"]
@@ -29,12 +21,13 @@ func readFormDataOfLogin(r *http.Request) (account string, pwd string) {
 	return
 }
 
-//Login Login
+//Login 登录页面
 func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	getExsitOrCreateNewSession(w, r).LastRequestTime = time.Now().UnixNano()
 	loginInputTemplate.ExecuteTemplate(w, "login", &loginVM{Tip: "请输入账号密码"})
 }
 
-//LoginCommit LoginCommit
+//LoginCommit 登录请求
 func LoginCommit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	err := r.ParseForm()
 	if err != nil {
@@ -47,11 +40,20 @@ func LoginCommit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		loginInputTemplate.ExecuteTemplate(w, "login", &loginVM{Tip: "请输入账号密码"})
 		return
 	}
+	//查询用户
 	user, err := usecase.QueryUser(account, pwd)
 	if err != nil {
 		loginInputTemplate.ExecuteTemplate(w, "login", &loginVM{Tip: err.Error()})
 		return
 	}
-	getExsitOrCreateNewSession(w, r).User = user
+	session := getExsitOrCreateNewSession(w, r)
+	session.LastRequestTime = time.Now().UnixNano()
+	session.User = user
 	loginSuccessTemplate.ExecuteTemplate(w, "login", nil)
+}
+
+//Exit 登出
+func Exit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	getExsitOrCreateNewSession(w, r).User = nil
+	indexTemplate.ExecuteTemplate(w, "index", new(indexVM))
 }

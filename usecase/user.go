@@ -29,20 +29,12 @@ func AddUser(data *UserSignUpData) error {
 	//检查账户合法性
 	//检查密码合法性
 	//检查昵称占用
-	exist, err := db.IsUserNameExist(data.Name)
-	if err != nil {
-		return err
-	}
-	if exist {
-		return tool.DataRepeatError{RepeatItem: "昵称"}
+	if db.IsUserNameExist(data.Name) {
+		return tool.ErrDataRepeat{RepeatItem: "昵称"}
 	}
 	//检查账户占用
-	exist, err = db.IsAccountExist(data.Account)
-	if err != nil {
-		return err
-	}
-	if exist {
-		return tool.DataRepeatError{RepeatItem: "账号"}
+	if db.IsUserAccountExist(data.Account) {
+		return tool.ErrDataRepeat{RepeatItem: "账号"}
 	}
 	//保存
 	user := data.buildUserIns()

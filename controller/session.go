@@ -39,6 +39,8 @@ func getExsitSession(r *http.Request) *Session {
 	if !ok {
 		return nil
 	}
+	//auto update time
+	v.LastRequestTime = time.Now().Unix()
 	return v
 }
 

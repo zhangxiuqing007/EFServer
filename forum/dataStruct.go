@@ -10,13 +10,13 @@ type Post struct {
 //Comment 评论
 type Comment struct {
 	PostBase
-	PostID uint64
+	PostID int64
 }
 
 // PostBase 基础结构
 type PostBase struct {
-	ID     uint64
-	UserID uint64
+	ID     int64
+	UserID int64
 
 	Content string
 
@@ -32,7 +32,7 @@ type PostBase struct {
 
 //User 用户
 type User struct {
-	ID   uint64
+	ID   int64
 	Name string
 
 	Account  string
