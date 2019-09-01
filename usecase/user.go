@@ -28,13 +28,14 @@ func AddUser(data *UserSignUpData) error {
 	//检查昵称合法性
 	//检查账户合法性
 	//检查密码合法性
+
 	//检查昵称占用
 	if db.IsUserNameExist(data.Name) {
-		return tool.ErrDataRepeat{RepeatItem: "昵称"}
+		return &tool.ErrDataRepeat{RepeatItem: "昵称"}
 	}
 	//检查账户占用
 	if db.IsUserAccountExist(data.Account) {
-		return tool.ErrDataRepeat{RepeatItem: "账号"}
+		return &tool.ErrDataRepeat{RepeatItem: "账号"}
 	}
 	//保存
 	user := data.buildUserIns()

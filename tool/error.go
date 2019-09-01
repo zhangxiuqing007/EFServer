@@ -5,7 +5,7 @@ type ErrStr struct {
 	ErrorStr string
 }
 
-func (err ErrStr) Error() string {
+func (err *ErrStr) Error() string {
 	return err.ErrorStr
 }
 
@@ -14,7 +14,7 @@ type ErrQueryNoResult struct {
 	QueryItem string
 }
 
-func (err ErrQueryNoResult) Error() string {
+func (err *ErrQueryNoResult) Error() string {
 	return err.QueryItem + "查询失败"
 }
 
@@ -23,6 +23,15 @@ type ErrDataRepeat struct {
 	RepeatItem string
 }
 
-func (err ErrDataRepeat) Error() string {
+func (err *ErrDataRepeat) Error() string {
 	return err.RepeatItem + "重复"
+}
+
+//ErrUnDone 开发未完成
+type ErrUnDone struct {
+	UnDoneItem string
+}
+
+func (err *ErrUnDone) Error() string {
+	return err.UnDoneItem + "：开发未完成"
 }

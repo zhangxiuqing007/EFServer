@@ -14,19 +14,26 @@ type IDataIO interface {
 	Open(string) error
 	Close() error
 
+	AddTheme(themeName string) error
+	DeleteTheme(themeID int64) error
+	UpdateTheme(theme *forum.Theme) error
+	QueryTheme(themeName string) (*forum.Theme, error)
+	QueryThemes() ([]*forum.Theme, error) //查询所有主题
+
 	AddPost(post *forum.Post) error
-	DeletePost(post *forum.Post) error
+	DeletePost(postID int64) error
 	UpdatePost(post *forum.Post) error
-	QueryPost(id int64) (*forum.Post, error)
+	QueryPost(postID int64) (*forum.Post, error) //comments有内容
 
 	AddComment(comment *forum.Comment) error
-	DeleteComment(comment *forum.Comment) error
+	DeleteComment(cmtID int64) error
 	UpdateComment(comment *forum.Comment) error
-	QueryComment(id int64) (*forum.Comment, error)
+	QueryComments(postID int64) ([]*forum.Comment, error)
 
 	AddUser(user *forum.User) error
-	DeleteUser(user *forum.User) error
+	DeleteUser(userID int64) error
 	UpdateUser(user *forum.User) error
+	QueryUserByID(userID int64) (*forum.User, error)
 	QueryUserByAccountAndPwd(account string, password string) (*forum.User, error)
 
 	IsUserNameExist(name string) bool
