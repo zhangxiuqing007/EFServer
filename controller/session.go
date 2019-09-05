@@ -39,21 +39,28 @@ func getExsitSession(r *http.Request) *Session {
 	if !ok {
 		return nil
 	}
-	//auto update time
-	v.LastRequestTime = time.Now().Unix()
 	return v
 }
 
-func getExsitOrCreateNewSession(w http.ResponseWriter, r *http.Request) *Session {
+func getExsitOrCreateNewSession(w http.ResponseWriter, r *http.Request, recordTime bool) *Session {
 	session := getExsitSession(r)
 	if session == nil {
 		session = createNewSession()
-		cook := &http.Cookie{
+		http.SetCookie(w, &http.Cookie{
 			Name:     cookieKey,
 			Value:    session.UUID,
 			HttpOnly: true,
-		}
-		http.SetCookie(w, cook)
+			Path:     "/",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:     cookieKey,
+			Value:    session.UUID,
+			HttpOnly: true,
+			Path:     "/Theme",
+		})
+	}
+	if recordTime {
+		session.LastRequestTime = time.Now().UnixNano()
 	}
 	return session
 }

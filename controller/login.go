@@ -1,13 +1,21 @@
 package controller
 
 import (
+	"html/template"
 	"net/http"
 
+	"EFServer/tool"
 	"EFServer/usecase"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
+
+var loginInputTemplate = template.Must(template.New("login").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/loginInput.html"))))
+var loginSuccessTemplate = template.Must(template.New("login").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/loginSuccess.html"))))
+
+type loginVM struct {
+	Tip string
+}
 
 func readFormDataOfLogin(r *http.Request) (account string, pwd string) {
 	strs := r.Form["account"]
@@ -23,7 +31,6 @@ func readFormDataOfLogin(r *http.Request) (account string, pwd string) {
 
 //Login 登录页面
 func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	getExsitOrCreateNewSession(w, r).LastRequestTime = time.Now().UnixNano()
 	loginInputTemplate.ExecuteTemplate(w, "login", &loginVM{Tip: "请输入账号密码"})
 }
 
@@ -46,14 +53,14 @@ func LoginCommit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		loginInputTemplate.ExecuteTemplate(w, "login", &loginVM{Tip: err.Error()})
 		return
 	}
-	session := getExsitOrCreateNewSession(w, r)
-	session.LastRequestTime = time.Now().UnixNano()
+	session := getExsitOrCreateNewSession(w, r, true)
 	session.User = user
-	loginSuccessTemplate.ExecuteTemplate(w, "login", nil)
+	loginSuccessTemplate.ExecuteTemplate(w, "login", user.Name)
 }
 
 //Exit 登出
 func Exit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	getExsitOrCreateNewSession(w, r).User = nil
-	indexTemplate.ExecuteTemplate(w, "index", new(indexVM))
+	s := getExsitOrCreateNewSession(w, r, true)
+	s.User = nil
+	sendIndexPage(w, s)
 }

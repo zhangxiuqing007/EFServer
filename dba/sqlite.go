@@ -104,6 +104,24 @@ func (s *SqliteIns) UpdatePost(post *forum.Post) error {
 	return err
 }
 
+//QueryPosts 查询帖子列表
+func (s *SqliteIns) QueryPosts(themeID int64) ([]*forum.PostBriefInfo, error) {
+	posts := make([]*forum.PostBriefInfo, 0, 100)
+	sqlStr := "select * from post p left join user u on p.userID = u.ID where p.themeID = ?"
+	rows, err := s.db.Query(sqlStr, themeID)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		post := new(forum.PostBriefInfo)
+		if err = rows.Scan( /* 未完成 */ ); err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+	return posts, nil
+}
+
 //QueryPost 查询帖子 带所有评论的引用
 func (s *SqliteIns) QueryPost(postID int64) (*forum.Post, error) {
 	post := new(forum.Post)

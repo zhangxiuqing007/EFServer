@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
-    <head>
+    <head>        
         <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
-        <title>边缘社区</title>
+        <title>{{ .ThemeTitle }}</title>
     </head>
     <body>
-        <span>欢迎访问本论坛：</span>
         {{ if .IsLogin }}
         <span>{{ .UserName }}</span>
         <a href="/Exit">注销</a>
@@ -13,11 +12,6 @@
         <a href="/Login">登录</a>
         <a href="/UserRegist">注册</a>
         {{ end }}
-        <!-- 下面是本论坛的各主题列表 -->
-        <ul>
-            {{ range .Themes }}
-            <li><a href="/Theme/{{ .Name }}">{{ .Name }}</a></li>
-            {{ end }}
-        </ul>
+        <a href="/">首页</a>
     </body>
-<html>
+</html>

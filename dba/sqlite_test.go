@@ -7,6 +7,21 @@ import "EFServer/forum"
 import "EFServer/tool"
 import "time"
 
+func Test_AddStandardThemes(t *testing.T) {
+	iotool := SqliteIns{}
+	iotool.Open("../ef.db")
+	defer iotool.Close()
+	iotool.AddTheme("要闻")
+	iotool.AddTheme("国内")
+	iotool.AddTheme("国际")
+	iotool.AddTheme("社会")
+	iotool.AddTheme("军事")
+	iotool.AddTheme("娱乐")
+	iotool.AddTheme("体育")
+	iotool.AddTheme("汽车")
+	iotool.AddTheme("科技")
+}
+
 func Test_UserOperations(t *testing.T) {
 	const testCount = 5
 	ioTool := &SqliteIns{}
@@ -175,8 +190,8 @@ func Test_PostAndCmt(t *testing.T) {
 	post.State = forum.PostStateNormal
 	post.LastEditTime = time.Now().UnixNano()
 	post.EditTimes = 1
-	post.PraiseTimes = 100
-	post.BelittleTimes = 1000
+	post.PraiseTimes = rand.Int()%100 + 2
+	post.BelittleTimes = rand.Int()%1000 + 3
 	if ioTool.UpdatePost(post) != nil {
 		t.Error("修改帖子失败")
 		t.FailNow()
@@ -201,8 +216,8 @@ func Test_PostAndCmt(t *testing.T) {
 		v.State = forum.CmtStateNormal
 		v.LastEditTime = time.Now().UnixNano()
 		v.EditTimes = 1
-		v.PraiseTimes = 100
-		v.BelittleTimes = 1000
+		v.PraiseTimes = rand.Int()%100 + 2
+		v.BelittleTimes = rand.Int()%1000 + 3
 		if ioTool.UpdateComment(v) != nil {
 			t.Error("更新评论失败")
 			t.FailNow()
@@ -325,4 +340,16 @@ func isTwoCmtSame(cmt1, cmt2 *forum.Comment) bool {
 		cmt1.EditTimes == cmt2.EditTimes &&
 		cmt1.PraiseTimes == cmt2.PraiseTimes &&
 		cmt1.BelittleTimes == cmt2.BelittleTimes
+}
+
+func Test_RandomValue(t *testing.T) {
+	ints := make([]int, 0, 1000)
+	i := 0
+	for {
+		ints = append(ints, rand.Intn(100))
+		i++
+		if i > 1000 {
+			break
+		}
+	}
 }

@@ -23,7 +23,8 @@ type IDataIO interface {
 	AddPost(post *forum.Post) error
 	DeletePost(postID int64) error
 	UpdatePost(post *forum.Post) error
-	QueryPost(postID int64) (*forum.Post, error) //comments有内容
+	QueryPosts(themeID int64) ([]*forum.PostBriefInfo, error) //查询主题下的所有帖子简要内容
+	QueryPost(postID int64) (*forum.Post, error)              //comments有内容
 
 	AddComment(comment *forum.Comment) error
 	DeleteComment(cmtID int64) error

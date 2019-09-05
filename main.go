@@ -30,6 +30,7 @@ func main() {
 	router.GET("/Login", controller.Login)
 	router.GET("/LoginCommit", controller.LoginCommit)
 	router.GET("/Exit", controller.Exit)
+	router.GET("/Theme/:theme", controller.Theme)
 	err = http.ListenAndServe("localhost:8080", router)
 	if err != nil {
 		fmt.Print("程序启动失败：" + err.Error())

@@ -6,6 +6,24 @@ type Theme struct {
 	Name string
 }
 
+//PostBriefInfo 帖子简要内容
+type PostBriefInfo struct {
+	ID    int64
+	Title string
+
+	CreaterID   int64
+	CreaterName string
+	CreateTime  int64
+
+	CommentCount  int
+	LastCmterID   int64
+	LastCmterName string
+	LastCmtTime   int64
+
+	PraiseTimes   int
+	BelittleTimes int
+}
+
 //Post 帖子
 type Post struct {
 	PostBase
