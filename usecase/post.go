@@ -45,3 +45,8 @@ func AddPost(data *PostingData) error {
 func QueryPost(postID int64) (*forum.Post, error) {
 	return db.QueryPost(postID)
 }
+
+//QueryPosts 查询帖子列表
+func QueryPosts(themeID int64, count, offset, sortType int) ([]*forum.PostBriefInfo, error) {
+	return db.QueryPosts(themeID, count, offset, sortType)
+}

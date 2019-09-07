@@ -1,13 +1,17 @@
 package dba
 
-import "testing"
-import "math/rand"
-import "strings"
-import "EFServer/forum"
-import "EFServer/tool"
-import "time"
+import (
+	"EFServer/forum"
+	"EFServer/tool"
+	"math/rand"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+)
 
-func Test_AddStandardThemes(t *testing.T) {
+//辅助手动测试
+func Test_HelpAddStandardThemes(t *testing.T) {
 	iotool := SqliteIns{}
 	iotool.Open("../ef.db")
 	defer iotool.Close()
@@ -22,6 +26,70 @@ func Test_AddStandardThemes(t *testing.T) {
 	iotool.AddTheme("科技")
 }
 
+func Test_HelpAddSomeUsers(t *testing.T) {
+	const addCount = 10
+	iotool := new(SqliteIns)
+	iotool.Open("../ef.db")
+	defer iotool.Close()
+	for i := 0; i < addCount; i++ {
+		user := buildRandomUser()
+		if iotool.AddUser(user) != nil {
+			t.Error("添加随机用户失败")
+			t.FailNow()
+		}
+	}
+}
+
+func Test_HelpAddSomePostAndCmts(t *testing.T) {
+	//指定用户，分别在指定主题，发5-10个测试帖子，然后给予几轮评论
+	const userCount = 10
+	const themeCount = 10
+	const cmtMaxCountOneUser = 3
+	userIDs := [userCount]int64{}
+	for i := 0; i < userCount; i++ {
+		userIDs[i] = int64(890 + i)
+	}
+	themeIDs := [themeCount]int64{}
+	for i := 0; i < themeCount; i++ {
+		themeIDs[i] = int64(1636 + i)
+	}
+	iotool := new(SqliteIns)
+	iotool.Open("../ef.db")
+	defer iotool.Close()
+	//针对每一个主题
+	for _, tm := range themeIDs {
+		//确定发帖轮数
+		postCount := rand.Intn(5) + 2
+		//开始发帖
+		for p := 0; p < postCount; p++ {
+			//每一个用户
+			for _, ur := range userIDs {
+				//发帖
+				randPost := buildRandomPost(tm, ur)
+				if iotool.AddPost(randPost) != nil {
+					t.Error("添加新帖失败")
+					t.FailNow()
+				}
+				//多轮评论
+				for cmtIndex := 0; cmtIndex < cmtMaxCountOneUser; cmtIndex++ {
+					for _, cmtUserID := range userIDs {
+						//有一个概率沉默
+						if rand.Intn(10) < 5 {
+							continue
+						}
+						randCmt := buildRandomCmt(randPost.ID, cmtUserID)
+						if iotool.AddComment(randCmt) != nil {
+							t.Error("添加评论失败")
+							t.FailNow()
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+//自动测试
 func Test_UserOperations(t *testing.T) {
 	const testCount = 5
 	ioTool := &SqliteIns{}
@@ -82,7 +150,7 @@ func Test_UserOperations(t *testing.T) {
 
 func buildRandomUser() *forum.User {
 	randUser := new(forum.User)
-	randUser.Name = tool.NewUUID()
+	randUser.Name = "测试用户" + strconv.Itoa(rand.Intn(10000)+1)
 	randUser.Account = tool.NewUUID()
 	randUser.PassWord = tool.NewUUID()
 	randUser.SignUpTime = time.Now().UnixNano()
@@ -300,11 +368,11 @@ func buildRandomCmt(postID, userID int64) *forum.Comment {
 }
 
 func buildPostTitle() string {
-	return combineUuids(rand.Int()%6 + 1)
+	return "测试标题：" + combineUuids(rand.Int()%6+1)
 }
 
 func buildPostContent() string {
-	return combineUuids(rand.Int()%100 + 1)
+	return "测试评论：" + combineUuids(rand.Int()%100+1)
 }
 
 func combineUuids(count int) string {
@@ -340,16 +408,4 @@ func isTwoCmtSame(cmt1, cmt2 *forum.Comment) bool {
 		cmt1.EditTimes == cmt2.EditTimes &&
 		cmt1.PraiseTimes == cmt2.PraiseTimes &&
 		cmt1.BelittleTimes == cmt2.BelittleTimes
-}
-
-func Test_RandomValue(t *testing.T) {
-	ints := make([]int, 0, 1000)
-	i := 0
-	for {
-		ints = append(ints, rand.Intn(100))
-		i++
-		if i > 1000 {
-			break
-		}
-	}
 }

@@ -1,5 +1,7 @@
 package forum
 
+import "time"
+
 //Theme 主题
 type Theme struct {
 	ID   int64
@@ -11,17 +13,31 @@ type PostBriefInfo struct {
 	ID    int64
 	Title string
 
+	CommentCount int
+
 	CreaterID   int64
 	CreaterName string
 	CreateTime  int64
 
-	CommentCount  int
 	LastCmterID   int64
 	LastCmterName string
 	LastCmtTime   int64
+}
 
-	PraiseTimes   int
-	BelittleTimes int
+//CreateTimeF 格式化创建时间
+func (p *PostBriefInfo) CreateTimeF() string {
+	return p.formatTime(p.CreateTime)
+}
+
+//LastCmtTimeF 格式化最终评论时间
+func (p *PostBriefInfo) LastCmtTimeF() string {
+	return p.formatTime(p.LastCmtTime)
+}
+
+//formatTime 格式化时间
+func (p *PostBriefInfo) formatTime(ticks int64) string {
+	timePoint := time.Unix(0, ticks)
+	return timePoint.String()
 }
 
 //Post 帖子

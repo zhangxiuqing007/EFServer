@@ -7,11 +7,26 @@
     <body>
         {{ if .IsLogin }}
         <span>{{ .UserName }}</span>
-        <a href="/Exit">注销</a>
+        <a href="/Exit">登出</a>
         {{ else }}
         <a href="/Login">登录</a>
         <a href="/UserRegist">注册</a>
         {{ end }}
         <a href="/">首页</a>
+        <br>
+        <!--下面是所有帖子的列表-->
+        {{ range .PostHeaders }}
+        <div>
+            <span>[{{.CommentCount}}]</span>
+            <a href="/Post/{{.ID}}">{{.Title}}</a>
+        </div>
+        <div>
+            创建：<a href="/User/{{.CreaterID}}">{{ .CreaterName }}</a>于{{ .FcreatedTime }}
+        </div>
+        <div>
+            最后评论：<a href="/User/{{.LastCmterID}}">{{ .LastCmterName }}于</a><a href="/Post/{{.ID}}">{{ .FlastCmtTime }}</a>
+        </div>
+        <br>
+        {{ end }}
     </body>
 </html>

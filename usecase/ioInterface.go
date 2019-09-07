@@ -23,8 +23,8 @@ type IDataIO interface {
 	AddPost(post *forum.Post) error
 	DeletePost(postID int64) error
 	UpdatePost(post *forum.Post) error
-	QueryPosts(themeID int64) ([]*forum.PostBriefInfo, error) //查询主题下的所有帖子简要内容
-	QueryPost(postID int64) (*forum.Post, error)              //comments有内容
+	QueryPosts(themeID int64, count, offset, sortType int) ([]*forum.PostBriefInfo, error) //查询主题下的所有帖子简要内容
+	QueryPost(postID int64) (*forum.Post, error)                                           //comments有内容
 
 	AddComment(comment *forum.Comment) error
 	DeleteComment(cmtID int64) error
@@ -40,3 +40,10 @@ type IDataIO interface {
 	IsUserNameExist(name string) bool
 	IsUserAccountExist(account string) bool
 }
+
+const (
+	//PostSortTypeCreatedTime 排序类型：发帖时间
+	PostSortTypeCreatedTime = iota
+	//PostSortTypeLastCmtTime 排序类型：最终评论时间
+	PostSortTypeLastCmtTime
+)

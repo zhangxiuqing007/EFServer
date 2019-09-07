@@ -72,5 +72,5 @@ func UserRegistCommit(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		return
 	}
 	//注册成功
-	userRegistSuccessTemplate.ExecuteTemplate(w, "regist", nil)
+	userRegistSuccessTemplate.ExecuteTemplate(w, "regist", name)
 }

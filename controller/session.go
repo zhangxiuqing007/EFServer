@@ -58,6 +58,18 @@ func getExsitOrCreateNewSession(w http.ResponseWriter, r *http.Request, recordTi
 			HttpOnly: true,
 			Path:     "/Theme",
 		})
+		http.SetCookie(w, &http.Cookie{
+			Name:     cookieKey,
+			Value:    session.UUID,
+			HttpOnly: true,
+			Path:     "/Post",
+		})
+		http.SetCookie(w, &http.Cookie{
+			Name:     cookieKey,
+			Value:    session.UUID,
+			HttpOnly: true,
+			Path:     "/User",
+		})
 	}
 	if recordTime {
 		session.LastRequestTime = time.Now().UnixNano()
