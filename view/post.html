@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+    <title>边缘社区-{{ .Title }}</title>
+</head>
+<body>
+    <!--导航-->
+    {{ if .IsLogin }}
+        <span>{{ .UserName }}</span>
+        <a href="/Exit">登出</a>
+        {{ else }}
+        <a href="/Login">登录</a>
+        <a href="/UserRegist">注册</a>
+    {{ end }}
+    <a href="/">首页</a>
+    <a href="/Theme/{{ .ThemeID }}/0">{{ .ThemeName }}</a>
+    <!--主帖标题-->
+    <h1>{{ .Title }}</h1>
+    <br>
+    <!-- 评论 -->
+    {{ range .Comments }}
+    <div>
+        <span>[{{ .Index }}楼]</span>    
+        <a href="/User/{{ .CmterID }}">{{ .CmterName }}</a>：
+        <span>时间：{{ .CmtTimeF }}</span>
+        <span>赞：{{ .PraiseTimes }}</span>
+        <span>踩：{{ .BelittleTimes }}</span>
+    </div>
+    <div>
+        {{ .Content }}
+    </div>
+    <br>
+    {{ end }}
+</body>

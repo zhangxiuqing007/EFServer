@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"EFServer/forum"
-	"EFServer/tool"
+	"errors"
 	"time"
 	"unicode/utf8"
 )
@@ -14,8 +14,8 @@ type UserSignUpData struct {
 	Password string
 }
 
-func (data UserSignUpData) buildUserIns() *forum.User {
-	user := new(forum.User)
+func (data UserSignUpData) buildUserIns() *forum.UserInDB {
+	user := new(forum.UserInDB)
 	user.ID = 0
 	user.Name = data.Name
 	user.Account = data.Account
@@ -30,23 +30,23 @@ func (data UserSignUpData) buildUserIns() *forum.User {
 func AddUser(data *UserSignUpData) error {
 	//检查昵称合法性
 	if utf8.RuneCountInString(data.Name) == 0 {
-		return &tool.ErrStr{ErrorStr: "昵称不合法（至少一个字）"}
+		return errors.New("昵称不合法（至少一个字）")
 	}
 	//检查账户合法性
 	if utf8.RuneCountInString(data.Account) < 3 {
-		return &tool.ErrStr{ErrorStr: "账号不合法（至少三个字符）"}
+		return errors.New("账号不合法（至少三个字符）")
 	}
 	//检查密码合法性
 	if utf8.RuneCountInString(data.Password) < 3 {
-		return &tool.ErrStr{ErrorStr: "密码不合法（至少三个字符）"}
+		return errors.New("密码不合法（至少三个字符）")
 	}
 	//检查昵称占用
 	if db.IsUserNameExist(data.Name) {
-		return &tool.ErrDataRepeat{RepeatItem: "昵称"}
+		return errors.New("昵称被占用")
 	}
 	//检查账户占用
 	if db.IsUserAccountExist(data.Account) {
-		return &tool.ErrDataRepeat{RepeatItem: "账号"}
+		return errors.New("账号被占用")
 	}
 	//保存
 	user := data.buildUserIns()
@@ -54,6 +54,11 @@ func AddUser(data *UserSignUpData) error {
 }
 
 //QueryUser 用户查询
-func QueryUser(account string, password string) (*forum.User, error) {
+func QueryUser(account string, password string) (*forum.UserInDB, error) {
 	return db.QueryUserByAccountAndPwd(account, password)
+}
+
+//QueryUserSaInfo 查询用户统计信息
+func QueryUserSaInfo(userID int64) (*forum.UserStatisticsInfo, error) {
+	return db.QueryUserSaInfoByID(userID)
 }

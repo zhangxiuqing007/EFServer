@@ -12,8 +12,8 @@ type CommentingData struct {
 	Content string
 }
 
-func (data *CommentingData) buildCommentIns() *forum.Comment {
-	comment := new(forum.Comment)
+func (data *CommentingData) buildCommentIns() *forum.CommentInDB {
+	comment := new(forum.CommentInDB)
 	comment.ID = 0
 	comment.UserID = data.UserID
 	comment.PostID = data.PostID
@@ -35,4 +35,9 @@ func AddComment(data *CommentingData) error {
 	//保存
 	comment := data.buildCommentIns()
 	return db.AddComment(comment)
+}
+
+//QueryPgComments 查询评论内容，用户帖子页内展示
+func QueryPgComments(postID int64) ([]*forum.CmtOnPostPage, error) {
+	return db.QueryPgComments(postID)
 }

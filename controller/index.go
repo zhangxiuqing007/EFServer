@@ -13,9 +13,8 @@ import (
 var indexTemplate = template.Must(template.New("index").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/index.html"))))
 
 type indexVM struct {
-	IsLogin  bool
-	UserName string
-	Themes   []*forum.Theme
+	loginInfo
+	Themes []*forum.ThemeInDB
 }
 
 //Index 打开首页
@@ -33,15 +32,12 @@ func sendIndexPage(w http.ResponseWriter, s *Session) {
 	//把主题都放进去
 	var err error
 	vm.Themes, err = usecase.GetAllThemes()
-	buildEmptyThemes := func(content string) []*forum.Theme {
-		tms := make([]*forum.Theme, 0, 1)
-		tms = append(tms, &forum.Theme{ID: -1, Name: content})
-		return tms
-	}
 	if err != nil {
-		vm.Themes = buildEmptyThemes("读取主题列表失败")
+		sendErrorPage(w, "查询主题列表失败")
+		return
 	} else if len(vm.Themes) == 0 {
-		vm.Themes = buildEmptyThemes("无主题")
+		sendErrorPage(w, "无主题")
+		return
 	}
 	indexTemplate.ExecuteTemplate(w, "index", vm)
 }

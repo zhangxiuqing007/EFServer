@@ -2,7 +2,7 @@
 <html>
     <head>        
         <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
-        <title>{{ .ThemeTitle }}</title>
+        <title>{{ .WebTitle }}</title>
     </head>
     <body>
         {{ if .IsLogin }}
@@ -14,19 +14,36 @@
         {{ end }}
         <a href="/">首页</a>
         <br>
+        <!-- 下面是所有帖子的页码 -->
+        {{ range .HeadPageNavis }}
+        <a href="{{.Path}}">[{{ .Number }}] </a>
+        {{ end }}
+        <span> [{{.CurrentPage.Number}}] </span>
+        {{ range .TailPageNavis }}
+        <a href="{{.Path}}">[{{ .Number }}] </a>
+        {{ end }}
+        <br>
         <!--下面是所有帖子的列表-->
         {{ range .PostHeaders }}
         <div>
-            <span>[{{.CommentCount}}]</span>
+            <span>[{{.CmtCount}}评]</span>
             <a href="/Post/{{.ID}}">{{.Title}}</a>
         </div>
         <div>
-            创建：<a href="/User/{{.CreaterID}}">{{ .CreaterName }}</a>于{{ .FcreatedTime }}
+            创建：<a href="/User/{{.CreaterID}}">{{ .CreaterName }}</a>于{{ .CreatedTimeF }}
         </div>
         <div>
-            最后评论：<a href="/User/{{.LastCmterID}}">{{ .LastCmterName }}于</a><a href="/Post/{{.ID}}">{{ .FlastCmtTime }}</a>
+            最后评论：<a href="/User/{{.LastCmterID}}">{{ .LastCmterName }}</a>于<a href="/Post/{{.ID}}">{{ .LastCmtTimeF }}</a>
         </div>
         <br>
+        {{ end }}
+        <!-- 下面是所有帖子的页码 -->
+        {{ range .HeadPageNavis }}
+        <a href="{{.Path}}">[{{ .Number }}] </a>
+        {{ end }}
+        <span> [{{.CurrentPage.Number}}] </span>
+        {{ range .TailPageNavis }}
+        <a href="{{.Path}}">[{{ .Number }}] </a>
         {{ end }}
     </body>
 </html>

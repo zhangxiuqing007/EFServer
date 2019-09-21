@@ -6,7 +6,6 @@ import (
 	"EFServer/usecase"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -30,10 +29,12 @@ func main() {
 	router.GET("/Login", controller.Login)
 	router.GET("/LoginCommit", controller.LoginCommit)
 	router.GET("/Exit", controller.Exit)
-	router.GET("/Theme/:theme", controller.Theme)
-	err = http.ListenAndServe("localhost:8080", router)
+	router.GET("/Theme/:id/:page", controller.Theme)
+	router.GET("/User/:userID", controller.UserInfo)
+	router.GET("/Post/:postID", controller.PostInfo)
+	fmt.Println("开始监听HTTP请求...")
+	err = http.ListenAndServe("localhost:15856", router)
 	if err != nil {
 		fmt.Print("程序启动失败：" + err.Error())
-		os.Exit(0)
 	}
 }

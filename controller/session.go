@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const cookieKey string = "userId"
+const cookieKey string = "sid"
 
 //SessionDict 会话map
 var SessionDict = make(map[string]*Session, 20)
@@ -17,7 +17,8 @@ type Session struct {
 	UUID            string
 	CreatedTime     int64
 	LastRequestTime int64
-	User            *forum.User
+	PostSortType    int //帖子排序方式
+	User            *forum.UserInDB
 }
 
 func createNewSession() *Session {
