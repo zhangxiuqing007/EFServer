@@ -14,7 +14,7 @@ func Test_ClearCurrentDb(t *testing.T) {
 	iotool.Open("../ef.db")
 	defer iotool.Close()
 	if iotool.Clear() != nil {
-		t.Error("清空失败")
+		t.Error("清空失败1")
 		t.FailNow()
 	}
 }
@@ -24,15 +24,15 @@ func Test_HelpAddStandardThemes(t *testing.T) {
 	iotool := SqliteIns{}
 	iotool.Open("../ef.db")
 	defer iotool.Close()
-	iotool.AddTheme("要闻")
-	iotool.AddTheme("国内")
-	iotool.AddTheme("国际")
-	iotool.AddTheme("社会")
-	iotool.AddTheme("军事")
-	iotool.AddTheme("娱乐")
-	iotool.AddTheme("体育")
-	iotool.AddTheme("汽车")
-	iotool.AddTheme("科技")
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "要闻"})
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "国内"})
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "国际"})
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "社会"})
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "军事"})
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "娱乐"})
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "体育"})
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "汽车"})
+	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "科技"})
 }
 
 func initRandomNameData() {
@@ -64,7 +64,7 @@ func Test_HelpAddSomeUsers(t *testing.T) {
 			continue
 		}
 		if iotool.AddUser(user) != nil {
-			t.Error("添加随机用户 失败")
+			t.Error("添加随机用户 失败1")
 			t.FailNow()
 		} else {
 			count++
@@ -82,58 +82,53 @@ func Test_HelpAddSomePostAndCmts(t *testing.T) {
 	//指定用户，分别在指定主题，发5-10个测试帖子，然后给予几轮评论
 	const userCount = 11
 	const themeCount = 9
+	//帖子总数
+	const postMaxCount = 2000000
 	//评论总数
-	const cmtMaxCountOneUser = 150000
-
+	const cmtMaxCount = 2000000
 	userIDs := [userCount]int64{}
 	for i := 0; i < userCount; i++ {
-		userIDs[i] = int64(150 + i)
+		userIDs[i] = int64(183 + i)
 	}
 	themeIDs := [themeCount]int64{}
 	for i := 0; i < themeCount; i++ {
-		themeIDs[i] = int64(1764 + i)
+		themeIDs[i] = int64(1792 + i)
 	}
 	iotool := new(SqliteIns)
 	iotool.Open("../ef.db")
 	defer iotool.Close()
 
-	posts := make([]*forum.PostInDB, 0, 200)
-	cmts := make([]*forum.CommentInDB, 0, 2000)
-	//针对每一个主题
-	for _, tm := range themeIDs {
-		//确定发帖轮数
-		postCount := 30
-		//开始发帖
-		for p := 0; p < postCount; p++ {
-			//每一个用户
-			for _, ur := range userIDs {
-				//发帖
-				randPost := buildRandomPost(tm, ur)
-				posts = append(posts, randPost)
-				//帖子主体内容（第0条评论）
-				randCmt := buildRandomCmt(randPost.ID, ur)
-				cmts = append(cmts, randCmt)
-			}
-		}
+	posts := make([]*forum.PostInDB, 0, postMaxCount)
+	for i := 0; i < postMaxCount; i++ {
+		//发帖
+		randPost := buildRandomPost(themeIDs[rand.Intn(themeCount)], userIDs[rand.Intn(userCount)])
+		posts = append(posts, randPost)
 	}
 	if iotool.AddPosts(posts) != nil {
 		t.Error("批量新增帖子失败3")
 		t.FailNow()
 	}
+	cmts := make([]*forum.CommentInDB, 0, cmtMaxCount)
+	for _, v := range posts {
+		//帖子主体内容（第0条评论）
+		randCmt := buildRandomCmt(v.ID, v.UserID)
+		cmts = append(cmts, randCmt)
+	}
 	if iotool.AddComments(cmts) != nil {
 		t.Error("添加评论失败")
 		t.FailNow()
 	}
-	cmts = make([]*forum.CommentInDB, 0, 2000)
+	posts = posts[0:501]
+	cmts = cmts[0:0]
 	//多轮评论
-	for cmti := 0; cmti < cmtMaxCountOneUser; cmti++ {
+	for cmti := 0; cmti < cmtMaxCount; cmti++ {
 		cmts = append(cmts, buildRandomCmt(posts[rand.Intn(len(posts))].ID, userIDs[rand.Intn(userCount)]))
-		if len(cmts) >= 2000 {
+		if len(cmts) >= 20000 {
 			if iotool.AddComments(cmts) != nil {
 				t.Error("添加评论失败")
 				t.FailNow()
 			}
-			cmts = make([]*forum.CommentInDB, 0, 2000)
+			cmts = cmts[0:0]
 		}
 	}
 }

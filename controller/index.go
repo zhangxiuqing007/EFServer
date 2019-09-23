@@ -2,7 +2,6 @@ package controller
 
 import (
 	"EFServer/forum"
-	"EFServer/tool"
 	"EFServer/usecase"
 	"html/template"
 	"net/http"
@@ -10,10 +9,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-var indexTemplate = template.Must(template.New("index").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/index.html"))))
+var indexTemplate = template.Must(template.ParseFiles("view/index.html", "view/comp/login.html"))
 
 type indexVM struct {
-	loginInfo
+	*loginInfo
 	Themes []*forum.ThemeInDB
 }
 
@@ -25,13 +24,10 @@ func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 //发送首页内容
 func sendIndexPage(w http.ResponseWriter, s *Session) {
 	vm := new(indexVM)
-	vm.IsLogin = s.User != nil
-	if vm.IsLogin {
-		vm.UserName = s.User.Name
-	}
+	vm.loginInfo = buildLoginInfo(s)
 	//把主题都放进去
 	var err error
-	vm.Themes, err = usecase.GetAllThemes()
+	vm.Themes, err = usecase.QueryAllThemes()
 	if err != nil {
 		sendErrorPage(w, "查询主题列表失败")
 		return
@@ -39,5 +35,5 @@ func sendIndexPage(w http.ResponseWriter, s *Session) {
 		sendErrorPage(w, "无主题")
 		return
 	}
-	indexTemplate.ExecuteTemplate(w, "index", vm)
+	indexTemplate.Execute(w, vm)
 }

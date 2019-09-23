@@ -12,7 +12,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-var userTemplate = template.Must(template.New("user").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/user.html"))))
+var userTemplate = template.Must(template.ParseFiles("view/user.html"))
 
 type userVM struct {
 	ID                                                                    int64
@@ -34,7 +34,7 @@ func UserInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 //统计并发送用户资料页面
 func sendUserPage(w http.ResponseWriter, userID int64, s *Session) {
 	//db统计用户信息
-	saInfo, err := usecase.QueryUserSaInfo(userID)
+	saInfo, err := usecase.QueryUserSaInfoByID(userID)
 	if err != nil {
 		sendErrorPage(w, err.Error())
 		return
@@ -50,5 +50,5 @@ func sendUserPage(w http.ResponseWriter, userID int64, s *Session) {
 	vm.CmtTotalCount = saInfo.CmtTotalCount
 	vm.TotalPraisedTimes = saInfo.TotalPraisedTimes
 	vm.TotalBelittledTimes = saInfo.TotalBelittledTimes
-	userTemplate.ExecuteTemplate(w, "user", vm)
+	userTemplate.Execute(w, vm)
 }

@@ -53,12 +53,12 @@ func AddUser(data *UserSignUpData) error {
 	return db.AddUser(user)
 }
 
-//QueryUser 用户查询
-func QueryUser(account string, password string) (*forum.UserInDB, error) {
+//QueryUserByAccountAndPwd 用户查询
+func QueryUserByAccountAndPwd(account string, password string) (*forum.UserInDB, error) {
 	return db.QueryUserByAccountAndPwd(account, password)
 }
 
-//QueryUserSaInfo 查询用户统计信息
-func QueryUserSaInfo(userID int64) (*forum.UserStatisticsInfo, error) {
+//QueryUserSaInfoByID 查询用户统计信息
+func QueryUserSaInfoByID(userID int64) (*forum.UserStatisticsInfo, error) {
 	return db.QueryUserSaInfoByID(userID)
 }

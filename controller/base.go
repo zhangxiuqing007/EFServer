@@ -2,7 +2,48 @@ package controller
 
 type loginInfo struct {
 	IsLogin  bool
+	UserID   int64
 	UserName string
+}
+
+//创建登录信息
+func buildLoginInfo(s *Session) *loginInfo {
+	result := new(loginInfo)
+	result.IsLogin = s.User != nil
+	if result.IsLogin {
+		result.UserID = s.User.ID
+		result.UserName = s.User.Name
+	}
+	return result
+}
+
+type pageNavi struct {
+	Path   string
+	Number int
+}
+
+type pageNavis struct {
+	HeadPageNavis []*pageNavi //前导航页
+	CurrentPage   *pageNavi   //当前页
+	TailPageNavis []*pageNavi //后导航页
+}
+
+//创建导航页vm
+func buildPageNavis(pathBuilder func(index int) string, beginIndex, currentIndex, endIndex int) *pageNavis {
+	//制作导航页切片
+	buildNavis := func(bi, ei int) []*pageNavi {
+		slice := make([]*pageNavi, 0, 16)
+		for i := bi; i <= ei; i++ {
+			slice = append(slice, &pageNavi{pathBuilder(i), i + 1})
+		}
+		return slice
+	}
+	//确定导航页限制
+	p := new(pageNavis)
+	p.HeadPageNavis = buildNavis(beginIndex, currentIndex-1)
+	p.CurrentPage = &pageNavi{"", currentIndex + 1}
+	p.TailPageNavis = buildNavis(currentIndex+1, endIndex)
+	return p
 }
 
 //获取提供的导航页
@@ -16,18 +57,21 @@ func getNaviPageIndexs(
 	if beginIndex < 0 {
 		beginIndex = 0
 	}
-	//再计算endIndex
-	//剩余的元素数量
-	leftElementCount := elementTotalCount - (currentPageIndex+1)*countOnePage
-	//剩余的页数量
-	leftPageCount := leftElementCount / countOnePage
-	if leftElementCount%countOnePage > 0 {
-		leftPageCount++
-	}
-	//剩余页上限
-	if leftPageCount > maxHalfNaviPageCount {
-		leftPageCount = maxHalfNaviPageCount
-	}
-	endIndex = currentPageIndex + leftPageCount
+	endIndex = limitPageIndex(currentPageIndex+maxHalfNaviPageCount, countOnePage, elementTotalCount)
 	return
+}
+
+//限制页索引
+func limitPageIndex(currentIndex int, countOnePage int, totalCount int) int {
+	if currentIndex < 0 {
+		currentIndex = 0
+	}
+	maxIndex := totalCount/countOnePage - 1
+	if totalCount%countOnePage != 0 {
+		maxIndex++
+	}
+	if currentIndex > maxIndex {
+		currentIndex = maxIndex
+	}
+	return currentIndex
 }

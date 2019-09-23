@@ -9,10 +9,10 @@ import (
 	"time"
 )
 
-//用户增删改查操作
+//用户增删查操作
 func Test_UserOperations(t *testing.T) {
 	initRandomNameData()
-	const testCount = 5
+	const testCount = 200
 	ioTool := &SqliteIns{}
 	ioTool.Open("../ef.db")
 	defer ioTool.Close()
@@ -99,14 +99,13 @@ func Test_ThemeOperations(t *testing.T) {
 	defer ioTool.Close()
 	//增
 	for i := 0; i < testCount; i++ {
-		tmName := buildRandomThemeName()
-		if _, err := ioTool.AddTheme(tmName); err != nil {
+		if err := ioTool.AddTheme(buildRandomTheme()); err != nil {
 			t.Error("增加")
 			t.FailNow()
 		}
 	}
 	//查
-	tms, err := ioTool.QueryThemes()
+	tms, err := ioTool.QueryAllThemes()
 	if err != nil {
 		t.Error("查")
 		t.FailNow()
@@ -148,7 +147,8 @@ func Test_PostAndCmt(t *testing.T) {
 	ioTool.Open("../ef.db")
 	defer ioTool.Close()
 	//创建主题
-	tmIns, err := ioTool.AddTheme(buildRandomThemeName())
+	tmIns := buildRandomTheme()
+	err := ioTool.AddTheme(tmIns)
 	if err != nil {
 		t.Error("新增主题失败")
 		t.FailNow()

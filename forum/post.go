@@ -2,6 +2,7 @@ package forum
 
 import (
 	"EFServer/tool"
+	"strconv"
 	"time"
 )
 
@@ -16,9 +17,9 @@ type PostOnPostPage struct {
 
 //CmtOnPostPage 评论在帖子页展示的信息
 type CmtOnPostPage struct {
-	ID      int64
-	Index   int
-	Content string
+	ID       int64
+	IndexStr string
+	Content  string
 
 	PraiseTimes   int
 	BelittleTimes int
@@ -34,9 +35,13 @@ func (cmt *CmtOnPostPage) FormatStringTime() {
 	cmt.CmtTimeF = tool.FormatTimeDetail(time.Unix(0, cmt.CmtTime))
 }
 
-//FormatIndex 生成楼层
+//FormatIndex 生成楼层字符
 func (cmt *CmtOnPostPage) FormatIndex(index int) {
-	cmt.Index = index
+	if index == 0 {
+		cmt.IndexStr = "楼主"
+	} else {
+		cmt.IndexStr = strconv.Itoa(index) + "楼"
+	}
 }
 
 //PostOnThemePage 帖子在主题页中展示的信息
@@ -61,6 +66,11 @@ type PostOnThemePage struct {
 func (p *PostOnThemePage) FormatStringTime() {
 	p.CreatedTimeF = tool.FormatTimeDetail(time.Unix(0, p.CreateTime))
 	p.LastCmtTimeF = tool.FormatTimeDetail(time.Unix(0, p.LastCmtTime))
+}
+
+//FixCmtCount 修正评论数量，减去主楼
+func (p *PostOnThemePage) FixCmtCount() {
+	p.CmtCount--
 }
 
 //PostInDB 帖子，数据库形态

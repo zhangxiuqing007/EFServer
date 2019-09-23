@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"EFServer/tool"
 	"EFServer/usecase"
 	"html/template"
 	"net/http"
@@ -9,8 +8,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-var userRegistInputTemplate = template.Must(template.New("regist").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/registInput.html"))))
-var userRegistSuccessTemplate = template.Must(template.New("regist").Parse(tool.MustStr(tool.ReadAllTextUtf8("view/registSuccess.html"))))
+var userRegistInputTemplate = template.Must(template.ParseFiles("view/registInput.html"))
+var userRegistSuccessTemplate = template.Must(template.ParseFiles("view/registSuccess.html"))
 
 type registInputVM struct {
 	Tip string
@@ -18,7 +17,7 @@ type registInputVM struct {
 
 //UserRegist 新用户注册
 func UserRegist(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	userRegistInputTemplate.ExecuteTemplate(w, "regist", registInputVM{Tip: "请输入注册资料"})
+	userRegistInputTemplate.Execute(w, registInputVM{Tip: "请输入注册资料"})
 }
 
 func readFormDataFromRegist(r *http.Request) (name string, account string, pwd1 string, pwd2 string) {
@@ -45,18 +44,18 @@ func readFormDataFromRegist(r *http.Request) (name string, account string, pwd1 
 func UserRegistCommit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	err := r.ParseForm()
 	if err != nil {
-		userRegistInputTemplate.ExecuteTemplate(w, "regist", registInputVM{Tip: "请输入完整的注册资料"})
+		userRegistInputTemplate.Execute(w, registInputVM{Tip: "请输入完整的注册资料"})
 		return
 	}
 	name, account, pwd1, pwd2 := readFormDataFromRegist(r)
 	//如果缺少任意一个注册资料
 	if len(name) == 0 || len(account) == 0 || len(pwd1) == 0 || len(pwd2) == 0 {
-		userRegistInputTemplate.ExecuteTemplate(w, "regist", registInputVM{Tip: "请输入完整的注册资料"})
+		userRegistInputTemplate.Execute(w, registInputVM{Tip: "请输入完整的注册资料"})
 		return
 	}
 	//后端再次检查一遍
 	if pwd1 != pwd2 {
-		userRegistInputTemplate.ExecuteTemplate(w, "regist", registInputVM{Tip: "两次密码输入不一致"})
+		userRegistInputTemplate.Execute(w, registInputVM{Tip: "两次密码输入不一致"})
 		return
 	}
 	//组织申请数据
@@ -68,9 +67,9 @@ func UserRegistCommit(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	//调用用例层代码，尝试添加账户，并返回错误
 	err = usecase.AddUser(data)
 	if err != nil {
-		userRegistInputTemplate.ExecuteTemplate(w, "regist", registInputVM{Tip: err.Error()})
+		userRegistInputTemplate.Execute(w, registInputVM{Tip: err.Error()})
 		return
 	}
 	//注册成功
-	userRegistSuccessTemplate.ExecuteTemplate(w, "regist", name)
+	userRegistSuccessTemplate.Execute(w, name)
 }

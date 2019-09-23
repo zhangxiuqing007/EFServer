@@ -29,9 +29,10 @@ func main() {
 	router.GET("/Login", controller.Login)
 	router.GET("/LoginCommit", controller.LoginCommit)
 	router.GET("/Exit", controller.Exit)
-	router.GET("/Theme/:id/:page", controller.Theme)
+	router.GET("/Theme/:themeID/:pageIndex", controller.Theme)
 	router.GET("/User/:userID", controller.UserInfo)
-	router.GET("/Post/:postID", controller.PostInfo)
+	router.GET("/User/:userID/:pageIndex", controller.UserPosts)
+	router.GET("/Post/:postID/:pageIndex", controller.PostInfo)
 	fmt.Println("开始监听HTTP请求...")
 	err = http.ListenAndServe("localhost:15856", router)
 	if err != nil {

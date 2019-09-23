@@ -5,45 +5,25 @@
         <title>{{ .WebTitle }}</title>
     </head>
     <body>
-        {{ if .IsLogin }}
-        <span>{{ .UserName }}</span>
-        <a href="/Exit">登出</a>
-        {{ else }}
-        <a href="/Login">登录</a>
-        <a href="/UserRegist">注册</a>
-        {{ end }}
-        <a href="/">首页</a>
+        {{ template "login.html" . }}
         <br>
-        <!-- 下面是所有帖子的页码 -->
-        {{ range .HeadPageNavis }}
-        <a href="{{.Path}}">[{{ .Number }}] </a>
-        {{ end }}
-        <span> [{{.CurrentPage.Number}}] </span>
-        {{ range .TailPageNavis }}
-        <a href="{{.Path}}">[{{ .Number }}] </a>
-        {{ end }}
+        {{ template "pageNavi.html" . }}
         <br>
         <!--下面是所有帖子的列表-->
         {{ range .PostHeaders }}
         <div>
             <span>[{{.CmtCount}}评]</span>
-            <a href="/Post/{{.ID}}">{{.Title}}</a>
+            <a href="/Post/{{.ID}}/0">{{.Title}}</a>
         </div>
         <div>
             创建：<a href="/User/{{.CreaterID}}">{{ .CreaterName }}</a>于{{ .CreatedTimeF }}
         </div>
         <div>
-            最后评论：<a href="/User/{{.LastCmterID}}">{{ .LastCmterName }}</a>于<a href="/Post/{{.ID}}">{{ .LastCmtTimeF }}</a>
+            最后评论：<a href="/User/{{.LastCmterID}}">{{ .LastCmterName }}</a>于{{ .LastCmtTimeF }}
         </div>
         <br>
         {{ end }}
-        <!-- 下面是所有帖子的页码 -->
-        {{ range .HeadPageNavis }}
-        <a href="{{.Path}}">[{{ .Number }}] </a>
-        {{ end }}
-        <span> [{{.CurrentPage.Number}}] </span>
-        {{ range .TailPageNavis }}
-        <a href="{{.Path}}">[{{ .Number }}] </a>
-        {{ end }}
+        {{ template "pageNavi.html" . }}
+        <br>
     </body>
 </html>

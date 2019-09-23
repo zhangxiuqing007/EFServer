@@ -5,22 +5,16 @@
 </head>
 <body>
     <!--导航-->
-    {{ if .IsLogin }}
-        <span>{{ .UserName }}</span>
-        <a href="/Exit">登出</a>
-        {{ else }}
-        <a href="/Login">登录</a>
-        <a href="/UserRegist">注册</a>
-    {{ end }}
-    <a href="/">首页</a>
+    {{ template "login.html" . }}
     <a href="/Theme/{{ .ThemeID }}/0">{{ .ThemeName }}</a>
     <!--主帖标题-->
     <h1>{{ .Title }}</h1>
+    {{ template "pageNavi.html" . }}
     <br>
     <!-- 评论 -->
     {{ range .Comments }}
     <div>
-        <span>[{{ .Index }}楼]</span>    
+        <span>[{{ .IndexStr }}]</span>    
         <a href="/User/{{ .CmterID }}">{{ .CmterName }}</a>：
         <span>时间：{{ .CmtTimeF }}</span>
         <span>赞：{{ .PraiseTimes }}</span>
@@ -31,4 +25,6 @@
     </div>
     <br>
     {{ end }}
+    {{ template "pageNavi.html" . }}
+    <br>
 </body>

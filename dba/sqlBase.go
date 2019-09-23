@@ -30,18 +30,16 @@ func (s *sqlBase) Close() error {
 const sqlStrToAddTheme = "insert into theme (name) values (?)"
 
 //AddTheme 增加主题
-func (s *sqlBase) AddTheme(themeName string) (*forum.ThemeInDB, error) {
-	tmIns := new(forum.ThemeInDB)
-	tmIns.Name = themeName
-	result, err := s.db.Exec(sqlStrToAddTheme, themeName)
+func (s *sqlBase) AddTheme(theme *forum.ThemeInDB) error {
+	result, err := s.db.Exec(sqlStrToAddTheme, theme.Name)
 	if err != nil {
-		return tmIns, err
+		return err
 	}
-	tmIns.ID, err = result.LastInsertId()
+	theme.ID, err = result.LastInsertId()
 	if err != nil {
-		return tmIns, err
+		return err
 	}
-	return tmIns, err
+	return err
 }
 
 const sqlStrToDeleteTheme = "delete from theme where ID = ?"
@@ -72,8 +70,8 @@ func (s *sqlBase) QueryTheme(themeID int64) (*forum.ThemeInDB, error) {
 
 const sqlStrToQueryThemes = "select * from theme"
 
-//QueryThemes 查询主题列表
-func (s *sqlBase) QueryThemes() ([]*forum.ThemeInDB, error) {
+//QueryAllThemes 查询主题列表
+func (s *sqlBase) QueryAllThemes() ([]*forum.ThemeInDB, error) {
 	rows, err := s.db.Query(sqlStrToQueryThemes)
 	if err != nil {
 		return nil, err
@@ -145,13 +143,39 @@ func (s *sqlBase) DeletePost(postID int64) error {
 	return err
 }
 
-const sqlStrToQueryPostCountOfTheme = "select count(post.ID) from post where post.themeID = ?"
+const sqlStrToQueryPost = "select themeID,userID,title,state from post where ID = ?"
+
+//QueryPost 查询帖子内容
+func (s *sqlBase) QueryPost(postID int64) (*forum.PostInDB, error) {
+	post := new(forum.PostInDB)
+	post.ID = postID
+	err := s.db.QueryRow(sqlStrToQueryPost, postID).Scan(
+		&post.ThemeID,
+		&post.UserID,
+		&post.Title,
+		&post.State)
+	if err != nil {
+		return nil, err
+	}
+	return post, nil
+}
+
+const sqlStrToQueryPostCountOfTheme = "select count(ID) from post where themeID = ?"
 
 //QueryPostCountOfTheme 统计本主题所有帖子总量
-func (s *sqlBase) QueryPostCountOfTheme(themeID int64) int {
+func (s *sqlBase) QueryPostCountOfTheme(themeID int64) (int, error) {
 	var count int
-	s.db.QueryRow(sqlStrToQueryPostCountOfTheme, themeID).Scan(&count)
-	return count
+	err := s.db.QueryRow(sqlStrToQueryPostCountOfTheme, themeID).Scan(&count)
+	return count, err
+}
+
+const sqlStrToQueryPostCountOfUser = "select count(ID) from post where userID = ?"
+
+//QueryPostCountOfUser 统计用户发帖总量
+func (s *sqlBase) QueryPostCountOfUser(userID int64) (int, error) {
+	var count int
+	err := s.db.QueryRow(sqlStrToQueryPostCountOfUser, userID).Scan(&count)
+	return count, err
 }
 
 const sqlStrToQueryPostsSortType0 = `
@@ -175,10 +199,10 @@ where
     and p.userID = u1.ID
     and cmt.postID = p.ID
     and u2.ID = cmt.userID
-group by 
+group by
     p.ID
-order by p.ID
-limit ? 
+order by p.ID desc
+limit ?
 offset ?`
 
 const sqlStrToQueryPostsSortType1 = `
@@ -208,8 +232,8 @@ order max(cmt.createdTime) desc
 limit ? 
 offset ?`
 
-//QueryPosts 查询某主题下的帖子列表
-func (s *sqlBase) QueryPosts(themeID int64, count, offset, sortType int) ([]*forum.PostOnThemePage, error) {
+//QueryPostsOfTheme 查询某主题下的帖子列表
+func (s *sqlBase) QueryPostsOfTheme(themeID int64, count, offset, sortType int) ([]*forum.PostOnThemePage, error) {
 	var rows *sql.Rows
 	var err error
 	if sortType == 0 {
@@ -220,11 +244,50 @@ func (s *sqlBase) QueryPosts(themeID int64, count, offset, sortType int) ([]*for
 	if err != nil {
 		return nil, err
 	}
+	return turnToPostsOnThemePage(rows, count)
+}
+
+const sqlStrToQueryPostsOfUser = `
+select 
+    p.ID,
+    p.title,
+    count(cmt.ID),
+    u1.ID,
+    u1.name,
+    min(cmt.createdTime),
+    u2.ID,
+    u2.name,
+    max(cmt.createdTime)
+from
+    user as u1,
+    post as p,
+    comment as cmt,
+    user as u2
+where 
+    u1.ID = ?
+    and p.userID = u1.ID
+    and cmt.postID = p.ID
+    and u2.ID = cmt.userID
+group by p.ID
+order by p.ID desc
+limit ? 
+offset ?`
+
+//QueryPostsOfUser 查询某用户的帖子列表
+func (s *sqlBase) QueryPostsOfUser(userID int64, count, offset int) ([]*forum.PostOnThemePage, error) {
+	rows, err := s.db.Query(sqlStrToQueryPostsOfUser, userID, count, offset)
+	if err != nil {
+		return nil, err
+	}
+	return turnToPostsOnThemePage(rows, count)
+}
+
+func turnToPostsOnThemePage(rows *sql.Rows, cap int) ([]*forum.PostOnThemePage, error) {
 	defer rows.Close()
-	posts := make([]*forum.PostOnThemePage, 0, count)
+	posts := make([]*forum.PostOnThemePage, 0, cap)
 	for rows.Next() {
 		post := new(forum.PostOnThemePage)
-		err = rows.Scan(
+		err := rows.Scan(
 			&post.ID,
 			&post.Title,
 			&post.CmtCount,
@@ -239,27 +302,10 @@ func (s *sqlBase) QueryPosts(themeID int64, count, offset, sortType int) ([]*for
 		}
 		posts = append(posts, post)
 	}
-	return posts, err
+	return posts, nil
 }
 
-const sqlStrToQueryPost = "select themeID,userID,title,state from post where ID = ?"
-
-//QueryPost 查询帖子内容
-func (s *sqlBase) QueryPost(postID int64) (*forum.PostInDB, error) {
-	post := new(forum.PostInDB)
-	post.ID = postID
-	err := s.db.QueryRow(sqlStrToQueryPost, postID).Scan(
-		&post.ThemeID,
-		&post.UserID,
-		&post.Title,
-		&post.State)
-	if err != nil {
-		return nil, err
-	}
-	return post, nil
-}
-
-const sqlStrToQueryPostPG = `
+const sqlStrToQueryPostOfPostPage = `
 select 
    p.title,
    tm.ID,
@@ -270,11 +316,11 @@ from
 where 
 	p.ID = ? and tm.ID = p.themeID`
 
-//QueryPostPG 查询帖子内容
-func (s *sqlBase) QueryPostPG(postID int64) (*forum.PostOnPostPage, error) {
+//QueryPostOfPostPage 查询帖子页的帖子内容
+func (s *sqlBase) QueryPostOfPostPage(postID int64) (*forum.PostOnPostPage, error) {
 	post := new(forum.PostOnPostPage)
 	post.ID = postID
-	err := s.db.QueryRow(sqlStrToQueryPostPG, postID).Scan(
+	err := s.db.QueryRow(sqlStrToQueryPostOfPostPage, postID).Scan(
 		&post.Title,
 		&post.ThemeID,
 		&post.ThemeName)
@@ -386,6 +432,15 @@ func (s *sqlBase) QueryComments(postID int64) ([]*forum.CommentInDB, error) {
 	return cmts, nil
 }
 
+const sqlStrToQueryCommentsCountOfPost = "select count(ID) from comment where postID = ?"
+
+//QueryCommentsCountOfPost 查询一个帖子的评论数量
+func (s *sqlBase) QueryCommentsCountOfPost(postID int64) (int, error) {
+	var count int
+	err := s.db.QueryRow(sqlStrToQueryCommentsCountOfPost, postID).Scan(&count)
+	return count, err
+}
+
 const sqlStrToQueryPgComments = `
 select 
        cmt.ID,
@@ -400,12 +455,14 @@ from
      join user as u
 where 
 	  cmt.postID = ? and cmt.userID = u.ID
-order by cmt.ID`
+order by cmt.ID
+limit ?
+offset ?`
 
-//QueryPgComments 查询评论内容，用于显示在帖子页中
-func (s *sqlBase) QueryPgComments(postID int64) ([]*forum.CmtOnPostPage, error) {
+//QueryCommentsOfPostPage 查询评论内容，用于显示在帖子页中
+func (s *sqlBase) QueryCommentsOfPostPage(postID int64, count int, offset int) ([]*forum.CmtOnPostPage, error) {
 	cmts := make([]*forum.CmtOnPostPage, 0, 50)
-	rows, err := s.db.Query(sqlStrToQueryPgComments, postID)
+	rows, err := s.db.Query(sqlStrToQueryPgComments, postID, count, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -463,6 +520,46 @@ func (s *sqlBase) DeleteUser(userID int64) error {
 	return err
 }
 
+const sqlStrToQueryUserByID = "select account,password,name,userType,state,signUpTime from user where ID = ?"
+
+//QueryUserByID 查询用户
+func (s *sqlBase) QueryUserByID(userID int64) (*forum.UserInDB, error) {
+	user := new(forum.UserInDB)
+	user.ID = userID
+	err := s.db.QueryRow(sqlStrToQueryUserByID, userID).Scan(
+		&user.Account,
+		&user.PassWord,
+		&user.Name,
+		&user.UserType,
+		&user.UserState,
+		&user.SignUpTime)
+	if err != nil {
+		err = errors.New("无此用户")
+		return nil, err
+	}
+	return user, nil
+}
+
+const sqlStrToQueryUserByAccountAndPwd = "select ID,name,userType,state,signUpTime from user where account = ? and password = ?"
+
+//QueryUserByAccountAndPwd 查询用户
+func (s *sqlBase) QueryUserByAccountAndPwd(account string, password string) (*forum.UserInDB, error) {
+	user := new(forum.UserInDB)
+	user.Account = account
+	user.PassWord = password
+	err := s.db.QueryRow(sqlStrToQueryUserByAccountAndPwd, account, password).Scan(
+		&user.ID,
+		&user.Name,
+		&user.UserType,
+		&user.UserState,
+		&user.SignUpTime)
+	if err != nil {
+		err = errors.New("无此用户")
+		return nil, err
+	}
+	return user, nil
+}
+
 const sqlStrToQueryUserSaInfoByIDSection1 = `
 select
       u.ID,
@@ -513,46 +610,6 @@ func (s *sqlBase) QueryUserSaInfoByID(userID int64) (*forum.UserStatisticsInfo, 
 	//总评论数减去发帖数，就是评论数
 	user.CmtTotalCount -= user.PostTotalCount
 	return user, err
-}
-
-const sqlStrToQueryUserByID = "select account,password,name,userType,state,signUpTime from user where ID = ?"
-
-//QueryUserByID 查询用户
-func (s *sqlBase) QueryUserByID(userID int64) (*forum.UserInDB, error) {
-	user := new(forum.UserInDB)
-	user.ID = userID
-	err := s.db.QueryRow(sqlStrToQueryUserByID, userID).Scan(
-		&user.Account,
-		&user.PassWord,
-		&user.Name,
-		&user.UserType,
-		&user.UserState,
-		&user.SignUpTime)
-	if err != nil {
-		err = errors.New("无此用户")
-		return nil, err
-	}
-	return user, nil
-}
-
-const sqlStrToQueryUserByAccountAndPwd = "select ID,name,userType,state,signUpTime from user where account = ? and password = ?"
-
-//QueryUserByAccountAndPwd 查询用户
-func (s *sqlBase) QueryUserByAccountAndPwd(account string, password string) (*forum.UserInDB, error) {
-	user := new(forum.UserInDB)
-	user.Account = account
-	user.PassWord = password
-	err := s.db.QueryRow(sqlStrToQueryUserByAccountAndPwd, account, password).Scan(
-		&user.ID,
-		&user.Name,
-		&user.UserType,
-		&user.UserState,
-		&user.SignUpTime)
-	if err != nil {
-		err = errors.New("无此用户")
-		return nil, err
-	}
-	return user, nil
 }
 
 const sqlStrToIsUserNameExist = "select ID from user where name = ?"
