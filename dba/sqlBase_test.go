@@ -2,19 +2,108 @@ package dba
 
 import (
 	"EFServer/forum"
-	"EFServer/tool"
+	"fmt"
 	"math/rand"
-	"strings"
 	"testing"
 	"time"
 )
 
-//用户增删查操作
+//测试主题表相关操作	go test -v -run TestThemeTableOperations
+func TestThemeTableOperations(t *testing.T) {
+	rander := new(testResourceBuilder)
+	rander.initRandomSeed()
+	sqlIns := rander.buildCurrentTestSQLIns()
+	defer sqlIns.Close()
+	const testCount = 5
+	//逐个新增主题
+	tms := rander.buildRandomTheme(testCount)
+	for i := 0; i < testCount; i++ {
+		err := sqlIns.AddTheme(tms[i])
+		if err != nil {
+			t.Error("x失败：新增主题")
+			t.FailNow()
+		}
+		tms = append(tms, tms[i])
+		t.Logf("成功：新增主题，ID:%d,Name:%s", tms[i].ID, tms[i].Name)
+	}
+	//逐个更新主题名称
+	for i, v := range tms {
+		v.Name = fmt.Sprintf("主题改名%d", i)
+		if sqlIns.UpdateTheme(v) != nil {
+			t.Error("x失败：修改主题名称")
+			t.FailNow()
+		} else {
+			t.Log("成功：修改主题名")
+		}
+	}
+	//逐个查询主题并对比信息
+	for _, v := range tms {
+		qtm, err := sqlIns.QueryTheme(v.ID)
+		if err != nil || qtm.ID != v.ID || qtm.Name != v.Name {
+			t.Error("x失败：查询主题")
+			t.FailNow()
+		} else {
+			t.Log("成功：查询主题，一致")
+		}
+	}
+	//查询所有主题
+	_, err := sqlIns.QueryAllThemes()
+	if err != nil {
+		t.Error("x失败：查询所有主题失败")
+		t.FailNow()
+	} else {
+		t.Log("成功：查询所有主题")
+	}
+	//删除刚才新增的主题
+	for _, v := range tms {
+		if sqlIns.DeleteTheme(v.ID) != nil {
+			t.Error("x失败：删除主题")
+			t.FailNow()
+		} else {
+			t.Logf("成功：删除主题，ID:%d,Name:%s", v.ID, v.Name)
+		}
+	}
+}
+
+//测试用户表相关操作	go test -v -run TestUserTableOperations
+func TestUserTableOperations(t *testing.T) {
+	rander := new(testResourceBuilder)
+	rander.initRandomSeed()
+	sqlIns := rander.buildCurrentTestSQLIns()
+	defer sqlIns.Close()
+	//创建随机用户
+	const testCount = 10
+	users := rander.buildRandomUsers(testCount)
+	//新增用户
+	for _, v := range users {
+		if sqlIns.AddUser(v) != nil {
+			t.Error("x失败：新增用户" + v.Name)
+			t.FailNow()
+		} else {
+			t.Log("成功：新增用户" + v.Name)
+		}
+	}
+	//通过id查询用户
+	//通过账号密码查询用户
+	//查询用户名是否存在
+	//查询账号是否存在
+	//查询用户的统计信息，需要其他模块配合，暂时没思路进行单元测试
+	//删除用户
+	for _, v := range users {
+		if sqlIns.DeleteUser(v.ID) != nil {
+			t.Error("x失败：删除用户" + v.Name)
+			t.FailNow()
+		} else {
+			t.Log("成功：删除用户" + v.Name)
+		}
+	}
+}
+
+//用户增删查操作	go test -v -run Test_UserOperations
 func Test_UserOperations(t *testing.T) {
 	initRandomNameData()
 	const testCount = 200
-	ioTool := &SqliteIns{}
-	ioTool.Open("../ef.db")
+
 	defer ioTool.Close()
 	//创建testCount个用户
 	testUsers := make([]*forum.UserInDB, 0, testCount)
@@ -69,28 +158,7 @@ func Test_UserOperations(t *testing.T) {
 	}
 }
 
-func buildRandomUser() *forum.UserInDB {
-	randUser := new(forum.UserInDB)
-	randUser.Name = tool.RandomChineseName()
-	randUser.Account = tool.NewUUID()
-	randUser.PassWord = tool.NewUUID()
-	randUser.SignUpTime = time.Now().UnixNano()
-	randUser.UserState = forum.UserStateNormal
-	randUser.UserType = forum.UserTypeNormalUser
-	return randUser
-}
-
-func isTwoUserSame(user1, user2 *forum.UserInDB) bool {
-	return user1.ID == user2.ID &&
-		user1.Name == user2.Name &&
-		user1.Account == user2.Account &&
-		user1.PassWord == user2.PassWord &&
-		user1.SignUpTime == user2.SignUpTime &&
-		user1.UserState == user2.UserState &&
-		user1.UserType == user2.UserType
-}
-
-//主题增删改查操作
+//主题增删改查操作	go test -v -run Test_ThemeOperations
 func Test_ThemeOperations(t *testing.T) {
 	initRandomNameData()
 	const testCount = 5
@@ -127,17 +195,7 @@ func Test_ThemeOperations(t *testing.T) {
 	}
 }
 
-func buildRandomTheme() *forum.ThemeInDB {
-	return &forum.ThemeInDB{Name: buildRandomThemeName()}
-}
-
-func buildRandomThemeName() string {
-	uuidStr := tool.NewUUID()
-	rs := []rune(uuidStr)
-	return string(rs[0 : rand.Int()%32+5])
-}
-
-//帖子和评论增删改查操作
+//帖子和评论增删改查操作	go test -v -run Test_PostAndCmt
 func Test_PostAndCmt(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	initRandomNameData()
@@ -231,53 +289,4 @@ func Test_PostAndCmt(t *testing.T) {
 		t.Error("删除主题失败")
 		t.FailNow()
 	}
-}
-
-func buildRandomPost(themeID, userID int64) *forum.PostInDB {
-	post := new(forum.PostInDB)
-	post.ID = 0
-	post.ThemeID = themeID
-	post.UserID = userID
-	post.Title = buildPostTitle()
-	post.State = forum.PostStateNormal
-	return post
-}
-
-func buildRandomCmt(postID, userID int64) *forum.CommentInDB {
-	cmt := new(forum.CommentInDB)
-	cmt.ID = 0
-	cmt.UserID = userID
-	cmt.State = forum.CmtStateNormal
-	cmt.PostID = postID
-	cmt.Content = buildPostContent()
-	cmt.CreatedTime = time.Now().UnixNano()
-	cmt.LastEditTime = cmt.CreatedTime
-	cmt.EditTimes = rand.Int()%5 + 1
-	cmt.PraiseTimes = rand.Int() % 200
-	cmt.BelittleTimes = rand.Int() % 1000
-	return cmt
-}
-
-func buildPostTitle() string {
-	return combineUuids(rand.Int()%6 + 1)
-}
-
-func buildPostContent() string {
-	return combineUuids(rand.Int()%100 + 1)
-}
-
-func combineUuids(count int) string {
-	var uids = make([]string, 0, count)
-	for i := 0; i < count; i++ {
-		uids = append(uids, tool.NewUUID())
-	}
-	return strings.Join(uids, " ")
-}
-
-func isTwoPostSame(post1, post2 *forum.PostInDB) bool {
-	return post1.ID == post2.ID &&
-		post1.ThemeID == post2.ThemeID &&
-		post1.UserID == post2.UserID &&
-		post1.Title == post2.Title &&
-		post1.State == post2.State
 }

@@ -5,13 +5,11 @@ import (
 	"EFServer/tool"
 	"math/rand"
 	"testing"
-	"time"
 )
 
-//清空数据库
+//清空数据库	go test -v -run Test_ClearCurrentDb
 func Test_ClearCurrentDb(t *testing.T) {
-	iotool := SqliteIns{}
-	iotool.Open("../ef.db")
+	iotool := new(testResourceBuilder).buildCurrentTestSQLIns()
 	defer iotool.Close()
 	if iotool.Clear() != nil {
 		t.Error("清空失败1")
@@ -19,10 +17,9 @@ func Test_ClearCurrentDb(t *testing.T) {
 	}
 }
 
-//增加标准主题
+//增加标准主题		go test -v -run Test_HelpAddStandardThemes
 func Test_HelpAddStandardThemes(t *testing.T) {
-	iotool := SqliteIns{}
-	iotool.Open("../ef.db")
+	iotool := new(testResourceBuilder).buildCurrentTestSQLIns()
 	defer iotool.Close()
 	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "要闻"})
 	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "国内"})
@@ -35,6 +32,41 @@ func Test_HelpAddStandardThemes(t *testing.T) {
 	iotool.AddTheme(&forum.ThemeInDB{ID: 0, Name: "科技"})
 }
 
+//增加一些用户，其中包括二把刀	go test -v -run Test_HelpAddSomeUsers
+func Test_HelpAddSomeUsers(t *testing.T) {
+	const addCount = 11
+	rander := new(testResourceBuilder)
+	rander.initRandomSeed()
+	iotool := rander.buildCurrentTestSQLIns()
+	defer iotool.Close()
+	users := rander.buildRandomUsers(addCount)
+	users[0].Name = "二把刀"
+	users[0].Account = "erbadao"
+	users[0].PassWord = "erbadao"
+	if iotool.AddUser(users[0]) != nil {
+		t.Error("x失败：添加测试用户")
+		t.FailNow()
+	} else {
+		t.Log("成功：添加测试用户")
+	}
+	initRandomNameData()
+	for i := 1; i < addCount; i++ {
+		user := users[i]
+		for {
+			user.Name = tool.RandomChineseName()
+			if iotool.IsUserNameExist(user.Name) {
+				continue
+			}
+		}
+		if iotool.AddUser(user) != nil {
+			t.Error("x失败：添加随机用户")
+			t.FailNow()
+		} else {
+			t.Log("成功：添加测试用户")
+		}
+	}
+}
+
 func initRandomNameData() {
 	spe := []rune{' ', '\r', '\n'}
 	tool.InitNameWords(
@@ -42,50 +74,19 @@ func initRandomNameData() {
 		tool.SplitText(tool.MustStr(tool.ReadAllTextUtf8("../config/中文名字.txt")), spe))
 }
 
-//增加一些用户，其中包括二把刀
-func Test_HelpAddSomeUsers(t *testing.T) {
-	initRandomNameData()
-	const addCount = 10
-	iotool := new(SqliteIns)
-	iotool.Open("../ef.db")
-	defer iotool.Close()
-	user := buildRandomUser()
-	user.Name = "二把刀"
-	user.Account = "erbadao"
-	user.PassWord = "erbadao"
-	iotool.AddUser(user)
-	count := 0
-	for {
-		user := buildRandomUser()
-		if iotool.IsUserNameExist(user.Name) {
-			continue
-		}
-		if iotool.IsUserAccountExist(user.Account) {
-			continue
-		}
-		if iotool.AddUser(user) != nil {
-			t.Error("添加随机用户 失败1")
-			t.FailNow()
-		} else {
-			count++
-		}
-		if count >= addCount {
-			break
-		}
-	}
-}
-
-//增加一些帖子和评论
+//增加一些帖子和评论	go test -v -run Test_HelpAddSomePostAndCmts
 func Test_HelpAddSomePostAndCmts(t *testing.T) {
-	//随机种子1
-	rand.Seed(time.Now().UnixNano())
-	//指定用户，分别在指定主题，发5-10个测试帖子，然后给予几轮评论
 	const userCount = 11
 	const themeCount = 9
-	//帖子总数
-	const postMaxCount = 2000000
-	//评论总数
-	const cmtMaxCount = 2000000
+	//帖子总数 100W
+	const postMaxCount = 1000000
+	//评论总数 100W
+	const cmtMaxCount = 1000000
+
+	rander := new(testResourceBuilder)
+	rander.initRandomSeed()
+	iotool := rander.buildCurrentTestSQLIns()
+	defer iotool.Close()
 	userIDs := [userCount]int64{}
 	for i := 0; i < userCount; i++ {
 		userIDs[i] = int64(183 + i)
@@ -94,39 +95,41 @@ func Test_HelpAddSomePostAndCmts(t *testing.T) {
 	for i := 0; i < themeCount; i++ {
 		themeIDs[i] = int64(1792 + i)
 	}
-	iotool := new(SqliteIns)
-	iotool.Open("../ef.db")
-	defer iotool.Close()
-
 	posts := make([]*forum.PostInDB, 0, postMaxCount)
 	for i := 0; i < postMaxCount; i++ {
-		//发帖
-		randPost := buildRandomPost(themeIDs[rand.Intn(themeCount)], userIDs[rand.Intn(userCount)])
-		posts = append(posts, randPost)
+		posts = append(posts, rander.buildRandomPost(themeIDs[rand.Intn(themeCount)], userIDs[rand.Intn(userCount)]))
 	}
 	if iotool.AddPosts(posts) != nil {
-		t.Error("批量新增帖子失败3")
+		t.Error("x失败：插入巨量测试帖子")
 		t.FailNow()
+	} else {
+		t.Log("成功：插入巨量测试帖子")
 	}
+
 	cmts := make([]*forum.CommentInDB, 0, cmtMaxCount)
 	for _, v := range posts {
 		//帖子主体内容（第0条评论）
-		randCmt := buildRandomCmt(v.ID, v.UserID)
+		randCmt := rander.buildRandomCmt(v.ID, v.UserID)
 		cmts = append(cmts, randCmt)
 	}
 	if iotool.AddComments(cmts) != nil {
-		t.Error("添加评论失败")
+		t.Error("x失败：插入楼主巨量测试评论")
 		t.FailNow()
+	} else {
+		t.Log("成功：插入楼主巨量测试评论")
 	}
+	//前500个帖子追加评论
 	posts = posts[0:501]
 	cmts = cmts[0:0]
 	//多轮评论
 	for cmti := 0; cmti < cmtMaxCount; cmti++ {
-		cmts = append(cmts, buildRandomCmt(posts[rand.Intn(len(posts))].ID, userIDs[rand.Intn(userCount)]))
-		if len(cmts) >= 20000 {
+		cmts = append(cmts, rander.buildRandomCmt(posts[rand.Intn(len(posts))].ID, userIDs[rand.Intn(userCount)]))
+		if cmti == cmtMaxCount-1 || len(cmts) >= 50000 {
 			if iotool.AddComments(cmts) != nil {
-				t.Error("添加评论失败")
+				t.Error("x失败：插入数万条随机评论")
 				t.FailNow()
+			} else {
+				t.Log("成功：插入数万条随机评论")
 			}
 			cmts = cmts[0:0]
 		}
