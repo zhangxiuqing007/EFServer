@@ -2,8 +2,6 @@ package tool
 
 import (
 	"errors"
-	"math/rand"
-	"time"
 )
 
 //SplitText 拆分文本
@@ -36,33 +34,4 @@ func SplitText(s string, spe []rune) []string {
 		}
 	}
 	return result
-}
-
-var firstNameWords []string
-var lastNameWords []string
-
-//InitNameWords 初始化随机名字用字符
-func InitNameWords(f, l []string) {
-	firstNameWords = f
-	lastNameWords = l
-}
-
-func getRandomFirstNameWord() []rune {
-	return []rune(firstNameWords[rand.Intn(len(firstNameWords))])
-}
-func getRandomLastNameWord() []rune {
-	return []rune(lastNameWords[rand.Intn(len(lastNameWords))])
-}
-
-//RandomChineseName 随机生成中文名字
-func RandomChineseName() string {
-	rand.Seed(time.Now().UnixNano())
-	name := make([]rune, 0, 5)
-	name = append(name, getRandomFirstNameWord()...)
-	name = append(name, getRandomLastNameWord()...)
-	//70%的人名字是两个字
-	if rand.Intn(100) > 30 {
-		name = append(name, getRandomLastNameWord()...)
-	}
-	return string(name)
 }

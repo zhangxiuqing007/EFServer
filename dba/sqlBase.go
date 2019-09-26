@@ -228,7 +228,7 @@ where
     and u2.ID = cmt.userID
 group by 
 	p.ID
-order max(cmt.createdTime) desc
+order by max(cmt.createdTime) desc
 limit ? 
 offset ?`
 

@@ -11,6 +11,8 @@ import (
 
 //测试资源创建者，放置包内有太多的全局函数
 type testResourceBuilder struct {
+	firstNameWords []string
+	lastNameWords  []rune
 }
 
 //随机种子值
@@ -20,7 +22,7 @@ func (t *testResourceBuilder) initRandomSeed() {
 
 //制造当前测试类型的sql对象
 func (t *testResourceBuilder) buildCurrentTestSQLIns() *sqlBase {
-	const testNowIsMysql = true
+	const testNowIsMysql = false
 	if testNowIsMysql {
 		db := MySQLIns{}
 		db.Open("mysql5856")
@@ -124,4 +126,40 @@ func (t *testResourceBuilder) isTwoUserSame(user1, user2 *forum.UserInDB) bool {
 		user1.UserType == user2.UserType &&
 		user1.UserState == user2.UserState &&
 		user1.SignUpTime == user2.SignUpTime
+}
+
+//检查是否已经加载了名字资源
+func (t *testResourceBuilder) checkInitNameResources() {
+	if t.firstNameWords == nil {
+		spe := []rune{' ', '\r', '\n'}
+		t.firstNameWords = tool.SplitText(tool.MustStr(tool.ReadAllTextUtf8("../config/中文姓氏.txt")), spe)
+		t.lastNameWords = make([]rune, 0, 1800)
+		for _, v := range tool.SplitText(tool.MustStr(tool.ReadAllTextUtf8("../config/中文名字.txt")), spe) {
+			rs := []rune(v)
+			if len(rs) > 0 {
+				t.lastNameWords = append(t.lastNameWords, rs[0])
+			}
+		}
+	}
+}
+
+//随机生成中文名字
+func (t *testResourceBuilder) buildRandomChineseName() string {
+	t.checkInitNameResources()
+	name := make([]rune, 0, 5)
+	name = append(name, t.getRandomFirstNameWord()...)
+	name = append(name, t.getRandomLastNameWord())
+	//70%的人名字是两个字
+	if rand.Intn(100) > 30 {
+		name = append(name, t.getRandomLastNameWord())
+	}
+	return string(name)
+}
+
+func (t *testResourceBuilder) getRandomFirstNameWord() []rune {
+	return []rune(t.firstNameWords[rand.Intn(len(t.firstNameWords))])
+}
+
+func (t *testResourceBuilder) getRandomLastNameWord() rune {
+	return t.lastNameWords[rand.Intn(len(t.lastNameWords))]
 }

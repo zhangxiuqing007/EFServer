@@ -2,7 +2,6 @@ package dba
 
 import (
 	"EFServer/forum"
-	"EFServer/tool"
 	"math/rand"
 	"testing"
 )
@@ -49,14 +48,14 @@ func Test_HelpAddSomeUsers(t *testing.T) {
 	} else {
 		t.Log("成功：添加测试用户")
 	}
-	initRandomNameData()
 	for i := 1; i < addCount; i++ {
 		user := users[i]
 		for {
-			user.Name = tool.RandomChineseName()
+			user.Name = rander.buildRandomChineseName()
 			if iotool.IsUserNameExist(user.Name) {
 				continue
 			}
+			break
 		}
 		if iotool.AddUser(user) != nil {
 			t.Error("x失败：添加随机用户")
@@ -65,13 +64,6 @@ func Test_HelpAddSomeUsers(t *testing.T) {
 			t.Log("成功：添加测试用户")
 		}
 	}
-}
-
-func initRandomNameData() {
-	spe := []rune{' ', '\r', '\n'}
-	tool.InitNameWords(
-		tool.SplitText(tool.MustStr(tool.ReadAllTextUtf8("../config/中文姓氏.txt")), spe),
-		tool.SplitText(tool.MustStr(tool.ReadAllTextUtf8("../config/中文名字.txt")), spe))
 }
 
 //增加一些帖子和评论	go test -v -run Test_HelpAddSomePostAndCmts
@@ -89,11 +81,11 @@ func Test_HelpAddSomePostAndCmts(t *testing.T) {
 	defer iotool.Close()
 	userIDs := [userCount]int64{}
 	for i := 0; i < userCount; i++ {
-		userIDs[i] = int64(183 + i)
+		userIDs[i] = int64(229 + i)
 	}
 	themeIDs := [themeCount]int64{}
 	for i := 0; i < themeCount; i++ {
-		themeIDs[i] = int64(1792 + i)
+		themeIDs[i] = int64(1810 + i)
 	}
 	posts := make([]*forum.PostInDB, 0, postMaxCount)
 	for i := 0; i < postMaxCount; i++ {
