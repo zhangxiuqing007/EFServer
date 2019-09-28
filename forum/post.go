@@ -17,7 +17,7 @@ type PostOnPostPage struct {
 
 //CmtOnPostPage 评论在帖子页展示的信息
 type CmtOnPostPage struct {
-	ID       int64
+	ID       uint64
 	IndexStr string
 	Content  string
 
@@ -86,7 +86,7 @@ type PostInDB struct {
 
 //CommentInDB 评论，数据库形态
 type CommentInDB struct {
-	ID     int64
+	ID     uint64
 	PostID int64
 	UserID int64
 

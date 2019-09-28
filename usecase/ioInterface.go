@@ -33,7 +33,7 @@ type IDataIO interface {
 
 	AddComment(comment *forum.CommentInDB) error                                             //新增评论
 	AddComments(comments []*forum.CommentInDB) error                                         //批量增加评论
-	DeleteComment(cmtID int64) error                                                         //删除评论
+	DeleteComment(cmtID uint64) error                                                        //删除评论
 	QueryComments(postID int64) ([]*forum.CommentInDB, error)                                //查询DB评论
 	QueryCommentsCountOfPost(postID int64) (int, error)                                      //统计帖子的评论数量
 	QueryCommentsOfPostPage(postID int64, count, offset int) ([]*forum.CmtOnPostPage, error) //查询帖子页内，评论的展示内容

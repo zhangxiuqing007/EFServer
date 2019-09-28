@@ -2,24 +2,14 @@ package dba
 
 import (
 	"EFServer/forum"
+	"crypto/md5"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 )
 
 type sqlBase struct {
 	db *sql.DB
-}
-
-const sqlStrToClear = `
-delete from comment;
-delete from post;
-delete from theme;
-delete from user;
-vacuum;`
-
-func (s *sqlBase) Clear() error {
-	_, err := s.db.Exec(sqlStrToClear)
-	return err
 }
 
 //Close 关闭
@@ -133,14 +123,22 @@ func (s *sqlBase) AddPosts(posts []*forum.PostInDB) error {
 	return tx.Commit()
 }
 
-const sqlStrToDeletePost = `
-delete from comment where postID = ?;
-delete from post where ID = ?`
+const sqlStrToDeletePostCmtPart = "delete from cmt where postID = ?"
+const sqlStrToDeletePostPostPart = " delete from post where ID = ?;"
 
 //DeletePost 删除帖子，同时删除所有评论
 func (s *sqlBase) DeletePost(postID int64) error {
-	_, err := s.db.Exec(sqlStrToDeletePost, postID, postID)
-	return err
+	t, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	if _, err = t.Exec(sqlStrToDeletePostCmtPart, postID); err != nil {
+		return err
+	}
+	if _, err = t.Exec(sqlStrToDeletePostPostPart, postID); err != nil {
+		return err
+	}
+	return t.Commit()
 }
 
 const sqlStrToQueryPost = "select themeID,userID,title,state from post where ID = ?"
@@ -192,10 +190,10 @@ select
 from
     post as p,
     user as u1,
-    comment as cmt,
+    cmt,
     user as u2
 where 
-    p.themeID == ?
+    p.themeID = ?
     and p.userID = u1.ID
     and cmt.postID = p.ID
     and u2.ID = cmt.userID
@@ -219,10 +217,10 @@ select
 from
     post as p,
     user as u1,
-    comment as cmt,
+    cmt,
     user as u2
 where 
-    p.themeID == ?
+    p.themeID = ?
     and p.userID = u1.ID
     and cmt.postID = p.ID
     and u2.ID = cmt.userID
@@ -261,7 +259,7 @@ select
 from
     user as u1,
     post as p,
-    comment as cmt,
+    cmt,
     user as u2
 where 
     u1.ID = ?
@@ -331,7 +329,7 @@ func (s *sqlBase) QueryPostOfPostPage(postID int64) (*forum.PostOnPostPage, erro
 }
 
 const sqlStrToAddComment = `
-insert into comment 
+insert into cmt 
 (
 	postID,
 	userID,
@@ -360,8 +358,12 @@ func (s *sqlBase) AddComment(cmt *forum.CommentInDB) error {
 	if err != nil {
 		return err
 	}
-	cmt.ID, err = back.LastInsertId()
-	return err
+	lastID, err := back.LastInsertId()
+	if err != nil {
+		return err
+	}
+	cmt.ID = uint64(lastID)
+	return nil
 }
 
 //AddComments 批量增加评论
@@ -393,15 +395,15 @@ func (s *sqlBase) AddComments(comments []*forum.CommentInDB) error {
 	return tx.Commit()
 }
 
-const sqlStrToDeleteComment = "delete from comment where ID =?"
+const sqlStrToDeleteComment = "delete from cmt where ID =?"
 
 //DeleteComment 删除单个评论
-func (s *sqlBase) DeleteComment(cmtID int64) error {
+func (s *sqlBase) DeleteComment(cmtID uint64) error {
 	_, err := s.db.Exec(sqlStrToDeleteComment, cmtID)
 	return err
 }
 
-const sqlStrToQueryComments = "select * from comment where postID = ? order by createdTime"
+const sqlStrToQueryComments = "select * from cmt where postID = ? order by ID"
 
 //QueryComments 查询评论，按照创建时间排序
 func (s *sqlBase) QueryComments(postID int64) ([]*forum.CommentInDB, error) {
@@ -432,7 +434,7 @@ func (s *sqlBase) QueryComments(postID int64) ([]*forum.CommentInDB, error) {
 	return cmts, nil
 }
 
-const sqlStrToQueryCommentsCountOfPost = "select count(ID) from comment where postID = ?"
+const sqlStrToQueryCommentsCountOfPost = "select count(ID) from cmt where postID = ?"
 
 //QueryCommentsCountOfPost 查询一个帖子的评论数量
 func (s *sqlBase) QueryCommentsCountOfPost(postID int64) (int, error) {
@@ -441,7 +443,7 @@ func (s *sqlBase) QueryCommentsCountOfPost(postID int64) (int, error) {
 	return count, err
 }
 
-const sqlStrToQueryPgComments = `
+const sqlStrToQueryCommentsOfPostPage = `
 select 
        cmt.ID,
        cmt.content,
@@ -451,7 +453,7 @@ select
        u.name,
        cmt.createdTime
 from 
-     comment as cmt
+     cmt
      join user as u
 where 
 	  cmt.postID = ? and cmt.userID = u.ID
@@ -462,7 +464,7 @@ offset ?`
 //QueryCommentsOfPostPage 查询评论内容，用于显示在帖子页中
 func (s *sqlBase) QueryCommentsOfPostPage(postID int64, count int, offset int) ([]*forum.CmtOnPostPage, error) {
 	cmts := make([]*forum.CmtOnPostPage, 0, 50)
-	rows, err := s.db.Query(sqlStrToQueryPgComments, postID, count, offset)
+	rows, err := s.db.Query(sqlStrToQueryCommentsOfPostPage, postID, count, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -500,7 +502,7 @@ values (?,?,?,?,?,?)`
 func (s *sqlBase) AddUser(user *forum.UserInDB) error {
 	back, err := s.db.Exec(sqlStrToAddUser,
 		user.Account,
-		user.PassWord,
+		s.passwordMd5ToHexStr(user.PassWord),
 		user.Name,
 		user.UserType,
 		user.UserState,
@@ -546,8 +548,8 @@ const sqlStrToQueryUserByAccountAndPwd = "select ID,name,userType,state,signUpTi
 func (s *sqlBase) QueryUserByAccountAndPwd(account string, password string) (*forum.UserInDB, error) {
 	user := new(forum.UserInDB)
 	user.Account = account
-	user.PassWord = password
-	err := s.db.QueryRow(sqlStrToQueryUserByAccountAndPwd, account, password).Scan(
+	user.PassWord = s.passwordMd5ToHexStr(password)
+	err := s.db.QueryRow(sqlStrToQueryUserByAccountAndPwd, account, user.PassWord).Scan(
 		&user.ID,
 		&user.Name,
 		&user.UserType,
@@ -582,7 +584,7 @@ select
       max(cmt.lastEditTime)
 from
     user as u,
-    comment as cmt
+    cmt
 where u.ID = ?
 and cmt.userID = u.ID`
 
@@ -628,4 +630,14 @@ func (s *sqlBase) IsUserAccountExist(account string) bool {
 	row := s.db.QueryRow(sqlStrToIsUserAccountExist, account)
 	err := row.Scan(new(int64))
 	return err == nil
+}
+
+//把密码md计算成16进制字符串 长度36
+func (s *sqlBase) passwordMd5ToHexStr(password string) string {
+	buffer := md5.New().Sum([]byte(password))
+	if len(buffer) > 18 {
+		buffer = buffer[0:18]
+	}
+	md5Str := hex.EncodeToString(buffer)
+	return md5Str
 }

@@ -3,8 +3,10 @@ package dba
 import (
 	"EFServer/forum"
 	"EFServer/tool"
+	"EFServer/usecase"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -21,16 +23,16 @@ func (t *testResourceBuilder) initRandomSeed() {
 }
 
 //制造当前测试类型的sql对象
-func (t *testResourceBuilder) buildCurrentTestSQLIns() *sqlBase {
-	const testNowIsMysql = false
+func (t *testResourceBuilder) buildCurrentTestSQLIns() usecase.IDataIO {
+	const testNowIsMysql = true
 	if testNowIsMysql {
 		db := MySQLIns{}
 		db.Open("mysql5856")
-		return &db.sqlBase
+		return &db
 	}
-	db := &SqliteIns{}
+	db := SqliteIns{}
 	db.Open("../ef.db")
-	return &db.sqlBase
+	return &db
 }
 
 //生成随机主题
@@ -51,7 +53,7 @@ func (t *testResourceBuilder) buildRandomUsers(count int) []*forum.UserInDB {
 		newUser := new(forum.UserInDB)
 		newUser.Account = tool.NewUUID()
 		newUser.PassWord = tool.NewUUID()
-		newUser.Name = tool.NewUUID()
+		newUser.Name = "测试用户" + strconv.Itoa(i)
 		if rand.Intn(2) == 1 {
 			newUser.UserType = forum.UserTypeAdministrator
 		} else {
@@ -121,7 +123,7 @@ func (t *testResourceBuilder) isTwoPostSame(post1, post2 *forum.PostInDB) bool {
 func (t *testResourceBuilder) isTwoUserSame(user1, user2 *forum.UserInDB) bool {
 	return user1.ID == user2.ID &&
 		user1.Account == user2.Account &&
-		user1.PassWord == user2.PassWord &&
+		user1.PassWord != user2.PassWord &&
 		user1.Name == user2.Name &&
 		user1.UserType == user2.UserType &&
 		user1.UserState == user2.UserState &&

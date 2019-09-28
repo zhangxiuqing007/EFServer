@@ -12,8 +12,7 @@ func Test_SqliteLink(t *testing.T) {
 		_, err = db.QueryAllThemes()
 	}
 	if err != nil {
-		t.Error("x失败：连接sqlite文件")
-		t.FailNow()
+		t.Fatalf("x失败：连接sqlite文件")
 	} else {
 		t.Logf("成功：连接至sqlite文件")
 	}

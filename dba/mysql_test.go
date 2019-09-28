@@ -12,8 +12,7 @@ func TestLinkToMysqlServer(t *testing.T) {
 		_, err = db.QueryAllThemes()
 	}
 	if err != nil {
-		t.Error("x失败：连接mysql服务器")
-		t.FailNow()
+		t.Fatalf("x失败：连接mysql服务器：" + err.Error())
 	} else {
 		t.Logf("成功：连接至mysql数据库")
 	}

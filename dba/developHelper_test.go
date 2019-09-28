@@ -6,13 +6,21 @@ import (
 	"testing"
 )
 
+//目前mysql不能通过sql清空
+// SET foreign_key_checks = 0;
+// truncate cmt;
+// truncate post;
+// truncate user;
+// truncate theme;
+// SET foreign_key_checks = 1;
+
 //清空数据库	go test -v -run Test_ClearCurrentDb
 func Test_ClearCurrentDb(t *testing.T) {
 	iotool := new(testResourceBuilder).buildCurrentTestSQLIns()
 	defer iotool.Close()
-	if iotool.Clear() != nil {
-		t.Error("清空失败1")
-		t.FailNow()
+	err := iotool.Clear()
+	if err != nil {
+		t.Fatalf(err.Error())
 	}
 }
 
@@ -42,9 +50,8 @@ func Test_HelpAddSomeUsers(t *testing.T) {
 	users[0].Name = "二把刀"
 	users[0].Account = "erbadao"
 	users[0].PassWord = "erbadao"
-	if iotool.AddUser(users[0]) != nil {
-		t.Error("x失败：添加测试用户")
-		t.FailNow()
+	if err := iotool.AddUser(users[0]); err != nil {
+		t.Fatalf("x失败：添加测试用户：" + err.Error())
 	} else {
 		t.Log("成功：添加测试用户")
 	}
@@ -58,8 +65,7 @@ func Test_HelpAddSomeUsers(t *testing.T) {
 			break
 		}
 		if iotool.AddUser(user) != nil {
-			t.Error("x失败：添加随机用户")
-			t.FailNow()
+			t.Fatalf("x失败：添加随机用户")
 		} else {
 			t.Log("成功：添加测试用户")
 		}
@@ -71,9 +77,9 @@ func Test_HelpAddSomePostAndCmts(t *testing.T) {
 	const userCount = 11
 	const themeCount = 9
 	//帖子总数 100W
-	const postMaxCount = 1000000
+	const postMaxCount = 10000
 	//评论总数 100W
-	const cmtMaxCount = 1000000
+	const cmtMaxCount = 200000
 
 	rander := new(testResourceBuilder)
 	rander.initRandomSeed()
@@ -81,19 +87,18 @@ func Test_HelpAddSomePostAndCmts(t *testing.T) {
 	defer iotool.Close()
 	userIDs := [userCount]int64{}
 	for i := 0; i < userCount; i++ {
-		userIDs[i] = int64(229 + i)
+		userIDs[i] = int64(1 + i)
 	}
 	themeIDs := [themeCount]int64{}
 	for i := 0; i < themeCount; i++ {
-		themeIDs[i] = int64(1810 + i)
+		themeIDs[i] = int64(1 + i)
 	}
 	posts := make([]*forum.PostInDB, 0, postMaxCount)
 	for i := 0; i < postMaxCount; i++ {
 		posts = append(posts, rander.buildRandomPost(themeIDs[rand.Intn(themeCount)], userIDs[rand.Intn(userCount)]))
 	}
-	if iotool.AddPosts(posts) != nil {
-		t.Error("x失败：插入巨量测试帖子")
-		t.FailNow()
+	if err := iotool.AddPosts(posts); err != nil {
+		t.Fatalf("x失败：插入巨量测试帖子，" + err.Error())
 	} else {
 		t.Log("成功：插入巨量测试帖子")
 	}
@@ -105,21 +110,19 @@ func Test_HelpAddSomePostAndCmts(t *testing.T) {
 		cmts = append(cmts, randCmt)
 	}
 	if iotool.AddComments(cmts) != nil {
-		t.Error("x失败：插入楼主巨量测试评论")
-		t.FailNow()
+		t.Fatalf("x失败：插入楼主巨量测试评论")
 	} else {
 		t.Log("成功：插入楼主巨量测试评论")
 	}
-	//前500个帖子追加评论
-	posts = posts[0:501]
+	//最后500个帖子追加评论
+	posts = posts[len(posts)-500:]
 	cmts = cmts[0:0]
 	//多轮评论
 	for cmti := 0; cmti < cmtMaxCount; cmti++ {
 		cmts = append(cmts, rander.buildRandomCmt(posts[rand.Intn(len(posts))].ID, userIDs[rand.Intn(userCount)]))
 		if cmti == cmtMaxCount-1 || len(cmts) >= 50000 {
 			if iotool.AddComments(cmts) != nil {
-				t.Error("x失败：插入数万条随机评论")
-				t.FailNow()
+				t.Fatalf("x失败：插入数万条随机评论")
 			} else {
 				t.Log("成功：插入数万条随机评论")
 			}

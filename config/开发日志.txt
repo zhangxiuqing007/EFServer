@@ -1,0 +1,21 @@
+2019.9.28
+1、采用MD5的方式来处理密码。
+2、修改部分dba的sql语句和调用方式，兼容mysql
+3、数据库表结构优化：
+    a、user表，新建索引：ID、name，形成更多覆盖索引，因为表内都存了userID，而没有存userName
+    b、theme表新增计数器字段：
+        1、postCount uint 主题内帖子总数量
+    c、主题表，新建索引：ID，name，形成更多覆盖索引。
+    d、user表新增计数器字段：
+        1、postCount uint 用户发帖总量
+        2、cmtCount uint 用户发表评论总量（含发帖量）
+        3、praiseTimes uint 用户被赞总量
+        4、belittleTimes uint 用户被踩总量
+        5、lastEditTime int64 最后编辑（发帖、改帖、发评论、改评论）时间。
+        6、lastEditID uint64 最后编辑的内容ID
+    e、post表新增计数器字段：
+        1、postTime int64 发帖时间
+        2、cmtCount uint 帖子评论总量（含主贴）
+        3、lastCmterID uint 最终评论人ID
+        4、lastCmtTime int64 最终评论时间
+4、需要新增赞踩记录表。下次再考虑。
