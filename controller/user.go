@@ -15,15 +15,23 @@ import (
 var userTemplate = template.Must(template.ParseFiles("view/user.html"))
 
 type userVM struct {
-	ID                                                                    int64
-	Name, SignUpTime, Type, State, LastOperateTime                        string
-	PostTotalCount, CmtTotalCount, TotalPraisedTimes, TotalBelittledTimes int
+	ID              int
+	Name            string
+	SignUpTime      string
+	Type            string
+	State           string
+	LastOperateTime string
+
+	PostTotalCount      int
+	CmtTotalCount       int
+	TotalPraisedTimes   int
+	TotalBelittledTimes int
 }
 
 //UserInfo 查看用户个人资料
 func UserInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	userIDStr := ps.ByName("userID")
-	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
 		sendErrorPage(w, err.Error())
 		return
@@ -32,9 +40,9 @@ func UserInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 //统计并发送用户资料页面
-func sendUserPage(w http.ResponseWriter, userID int64, s *Session) {
+func sendUserPage(w http.ResponseWriter, userID int, s *Session) {
 	//db统计用户信息
-	saInfo, err := usecase.QueryUserSaInfoByID(userID)
+	saInfo, err := usecase.QueryUserByID(userID)
 	if err != nil {
 		sendErrorPage(w, err.Error())
 		return
@@ -43,12 +51,17 @@ func sendUserPage(w http.ResponseWriter, userID int64, s *Session) {
 	vm.ID = saInfo.ID
 	vm.Name = saInfo.Name
 	vm.SignUpTime = tool.FormatTimeDetail(time.Unix(0, saInfo.SignUpTime))
-	vm.Type = forum.GetUserTypeShowName(saInfo.UserType)
-	vm.State = forum.GetUserStateShowName(saInfo.UserState)
-	vm.LastOperateTime = tool.FormatTimeDetail(time.Unix(0, saInfo.LastOperateTime))
-	vm.PostTotalCount = saInfo.PostTotalCount
-	vm.CmtTotalCount = saInfo.CmtTotalCount
-	vm.TotalPraisedTimes = saInfo.TotalPraisedTimes
-	vm.TotalBelittledTimes = saInfo.TotalBelittledTimes
+	vm.Type = forum.GetUserTypeShowName(saInfo.Type)
+	vm.State = forum.GetUserStateShowName(saInfo.State)
+	if saInfo.LastEditTime == 0 {
+		vm.LastOperateTime = "无"
+	} else {
+		vm.LastOperateTime = tool.FormatTimeDetail(time.Unix(0, saInfo.LastEditTime))
+	}
+
+	vm.PostTotalCount = saInfo.PostCount
+	vm.CmtTotalCount = saInfo.CommentCount
+	vm.TotalPraisedTimes = saInfo.PraiseTimes
+	vm.TotalBelittledTimes = saInfo.BelittleTimes
 	userTemplate.Execute(w, vm)
 }

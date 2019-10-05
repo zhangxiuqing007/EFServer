@@ -9,6 +9,11 @@ func QueryAllThemes() ([]*forum.ThemeInDB, error) {
 }
 
 //QueryTheme 获取主题
-func QueryTheme(themeID int64) (*forum.ThemeInDB, error) {
+func QueryTheme(themeID int) (*forum.ThemeInDB, error) {
 	return db.QueryTheme(themeID)
+}
+
+//QueryPostCountOfTheme 查询主题的帖子量
+func QueryPostCountOfTheme(themeID int) (int, error) {
+	return db.QueryPostCountOfTheme(themeID)
 }

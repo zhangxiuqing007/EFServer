@@ -41,6 +41,7 @@ func (t *testResourceBuilder) buildRandomTheme(count int) []*forum.ThemeInDB {
 	for i := 0; i < count; i++ {
 		newTheme := new(forum.ThemeInDB)
 		newTheme.Name = fmt.Sprintf("随机主题：%d", i+1)
+		newTheme.PostCount = 0
 		tms = append(tms, newTheme)
 	}
 	return tms
@@ -55,29 +56,38 @@ func (t *testResourceBuilder) buildRandomUsers(count int) []*forum.UserInDB {
 		newUser.PassWord = tool.NewUUID()
 		newUser.Name = "测试用户" + strconv.Itoa(i)
 		if rand.Intn(2) == 1 {
-			newUser.UserType = forum.UserTypeAdministrator
+			newUser.Type = forum.UserTypeAdministrator
 		} else {
-			newUser.UserType = forum.UserTypeNormalUser
+			newUser.Type = forum.UserTypeNormalUser
 		}
-		newUser.UserState = forum.UserStateNormal
+		newUser.State = forum.UserStateNormal
 		newUser.SignUpTime = time.Now().UnixNano()
+		newUser.PostCount = 0
+		newUser.CommentCount = 0
+		newUser.PraiseTimes = 0
+		newUser.BelittleTimes = 0
+		newUser.LastEditTime = 0 //最后一次编辑时间
 		users = append(users, newUser)
 	}
 	return users
 }
 
 //生成随机帖子
-func (t *testResourceBuilder) buildRandomPost(themeID, userID int64) *forum.PostInDB {
+func (t *testResourceBuilder) buildRandomPost(themeID, userID int) *forum.PostInDB {
 	post := new(forum.PostInDB)
 	post.ThemeID = themeID
 	post.UserID = userID
 	post.Title = t.buildRandomPostTitle()
 	post.State = forum.PostStateNormal
+	post.CreatedTime = time.Now().UnixNano()
+	post.CmtCount = 0
+	post.LastCmterID = userID
+	post.LastCmtTime = 0
 	return post
 }
 
 //生成随机评论
-func (t *testResourceBuilder) buildRandomCmt(postID, userID int64) *forum.CommentInDB {
+func (t *testResourceBuilder) buildRandomCmt(postID, userID int) *forum.CommentInDB {
 	cmt := new(forum.CommentInDB)
 	cmt.PostID = postID
 	cmt.UserID = userID
@@ -85,9 +95,9 @@ func (t *testResourceBuilder) buildRandomCmt(postID, userID int64) *forum.Commen
 	cmt.State = forum.CmtStateNormal
 	cmt.CreatedTime = time.Now().UnixNano()
 	cmt.LastEditTime = cmt.CreatedTime
-	cmt.EditTimes = rand.Int()%5 + 1
-	cmt.PraiseTimes = rand.Int() % 10
-	cmt.BelittleTimes = rand.Int() % 20
+	cmt.EditTimes = 1
+	cmt.PraiseTimes = 0
+	cmt.BelittleTimes = 0
 	return cmt
 }
 
@@ -116,7 +126,11 @@ func (t *testResourceBuilder) isTwoPostSame(post1, post2 *forum.PostInDB) bool {
 		post1.ThemeID == post2.ThemeID &&
 		post1.UserID == post2.UserID &&
 		post1.Title == post2.Title &&
-		post1.State == post2.State
+		post1.State == post2.State &&
+		post1.CreatedTime == post2.CreatedTime
+	//post1.CmtCount == post2.CmtCount &&
+	//post1.LastCmterID == post2.LastCmterID &&
+	//post1.LastCmtTime == post2.LastCmtTime
 }
 
 //判断两个用户是否相同
@@ -125,9 +139,22 @@ func (t *testResourceBuilder) isTwoUserSame(user1, user2 *forum.UserInDB) bool {
 		user1.Account == user2.Account &&
 		user1.PassWord != user2.PassWord &&
 		user1.Name == user2.Name &&
-		user1.UserType == user2.UserType &&
-		user1.UserState == user2.UserState &&
+		user1.Type == user2.Type &&
+		user1.State == user2.State &&
 		user1.SignUpTime == user2.SignUpTime
+	//user1.PostCount == user2.PostCount &&
+	//user1.CommentCount == user2.CommentCount &&
+	//user1.PraiseTimes == user2.PraiseTimes &&
+	//user1.BelittleTimes == user2.BelittleTimes &&
+	//user1.LastEditTime == user2.LastEditTime
+}
+
+func (t *testResourceBuilder) isTwoPbSame(pb1, pb2 *forum.PBInDB) bool {
+	return pb1.ID == pb2.ID &&
+		pb1.CmtID == pb2.CmtID &&
+		pb1.UserID == pb2.UserID &&
+		pb1.BValue == pb2.BValue &&
+		pb1.PValue == pb2.PValue
 }
 
 //检查是否已经加载了名字资源

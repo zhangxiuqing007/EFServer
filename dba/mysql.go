@@ -2,6 +2,7 @@ package dba
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	//mysql driver
@@ -16,17 +17,11 @@ type MySQLIns struct {
 //Open 打开
 func (s *MySQLIns) Open(dbFilePath string) error {
 	var err error
-	s.db, err = sql.Open("mysql", fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/efdb", dbFilePath))
+	s.DB, err = sql.Open("mysql", fmt.Sprintf("root:%s@tcp(127.0.0.1:3306)/efdb_bu?multiStatements=true", dbFilePath))
 	return err
 }
 
 //Clear 清空
 func (s *MySQLIns) Clear() error {
-	const sqlStrToClear = `
-	delete from cmt;
-	delete from post;
-	delete from theme;
-	delete from user;`
-	_, err := s.db.Exec(sqlStrToClear)
-	return err
+	return errors.New("mysql不支持清空全部数据，请手动操作")
 }

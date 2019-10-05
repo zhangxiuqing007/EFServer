@@ -1,31 +1,24 @@
 package forum
 
-//UserStatisticsInfo 用户统计信息页展示内容
-type UserStatisticsInfo struct {
-	UserBase
-	PostTotalCount      int
-	CmtTotalCount       int
-	TotalPraisedTimes   int
-	TotalBelittledTimes int
-	LastOperateTime     int64
-}
-
 //UserInDB 用户对象，在数据库中的表示
 type UserInDB struct {
-	UserBase
+	ID       int
 	Account  string
 	PassWord string
-}
+	Name     string
 
-//UserBase 用户基本信息
-type UserBase struct {
-	ID   int64
-	Name string
-
-	UserType  int
-	UserState int
+	Type  int
+	State int
 
 	SignUpTime int64
+
+	PostCount    int
+	CommentCount int
+
+	PraiseTimes   int
+	BelittleTimes int
+
+	LastEditTime int64
 }
 
 //GetUserTypeShowName 获取用户类型名称

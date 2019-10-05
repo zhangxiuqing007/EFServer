@@ -9,20 +9,25 @@ import (
 
 //UserSignUpData 新用户注册传输用数据结构，由Controller创建。
 type UserSignUpData struct {
-	Name     string
 	Account  string
 	Password string
+	Name     string
 }
 
 func (data UserSignUpData) buildUserIns() *forum.UserInDB {
 	user := new(forum.UserInDB)
 	user.ID = 0
-	user.Name = data.Name
 	user.Account = data.Account
 	user.PassWord = data.Password
+	user.Name = data.Name
+	user.Type = forum.UserTypeNormalUser
+	user.State = forum.UserStateNormal
 	user.SignUpTime = time.Now().UnixNano()
-	user.UserType = forum.UserTypeNormalUser
-	user.UserState = forum.UserStateNormal
+	user.PostCount = 0
+	user.CommentCount = 0
+	user.PraiseTimes = 0
+	user.BelittleTimes = 0
+	user.LastEditTime = 0
 	return user
 }
 
@@ -58,7 +63,12 @@ func QueryUserByAccountAndPwd(account string, password string) (*forum.UserInDB,
 	return db.QueryUserByAccountAndPwd(account, password)
 }
 
-//QueryUserSaInfoByID 查询用户统计信息
-func QueryUserSaInfoByID(userID int64) (*forum.UserStatisticsInfo, error) {
-	return db.QueryUserSaInfoByID(userID)
+//QueryUserByID 查询用户信息
+func QueryUserByID(userID int) (*forum.UserInDB, error) {
+	return db.QueryUserByID(userID)
+}
+
+//QueryPostCountOfUser 查询用户的发帖量
+func QueryPostCountOfUser(userID int) (int, error) {
+	return db.QueryPostCountOfUser(userID)
 }

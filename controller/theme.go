@@ -17,24 +17,30 @@ const postCountOnePage = 20                //主题页，一页帖子数量
 const halfPageCountToNavigationOfTheme = 8 //帖子导航页数量
 
 type themeVM struct {
-	WebTitle string //网页Header
-
-	*loginInfo //登录信息
-
+	ThemeID     int
+	WebTitle    string                   //网页Header
+	*loginInfo                           //登录信息
 	PostHeaders []*forum.PostOnThemePage //帖子简要内容
-
 	*pageNavis
 }
 
 //Theme 请求主题内帖子列表
 func Theme(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	themeID, _ := strconv.ParseInt(ps.ByName("themeID"), 10, 64)
-	pageIndex, _ := strconv.Atoi(ps.ByName("pageIndex"))
+	themeID, err := strconv.Atoi(ps.ByName("themeID"))
+	if err != nil {
+		sendErrorPage(w, "尝试访问错误的主题ID")
+		return
+	}
+	pageIndex, err := strconv.Atoi(ps.ByName("pageIndex"))
+	if err != nil {
+		sendErrorPage(w, "尝试访问错误的分页")
+		return
+	}
 	sendThemePage(w, themeID, pageIndex, getExsitOrCreateNewSession(w, r, true))
 }
 
 //发送主题页，帖子列表
-func sendThemePage(w http.ResponseWriter, themeID int64, pageIndex int, s *Session) {
+func sendThemePage(w http.ResponseWriter, themeID int, pageIndex int, s *Session) {
 	tm, err := usecase.QueryTheme(themeID)
 	if err != nil {
 		sendErrorPage(w, "访问主题失败")
@@ -42,6 +48,7 @@ func sendThemePage(w http.ResponseWriter, themeID int64, pageIndex int, s *Sessi
 	}
 	//创建 viewModel对象
 	vm := new(themeVM)
+	vm.ThemeID = themeID
 	//给vm赋基本值
 	vm.WebTitle = "边缘社区-" + tm.Name
 	vm.loginInfo = buildLoginInfo(s)
@@ -59,8 +66,7 @@ func sendThemePage(w http.ResponseWriter, themeID int64, pageIndex int, s *Sessi
 		return
 	}
 	for _, v := range vm.PostHeaders {
-		v.FormatStringTime() //生成文字日期
-		v.FixCmtCount()      //修正评论数量
+		v.FormatShowInfo()
 	}
 	pathBuilder := func(i int) string {
 		return fmt.Sprintf("/Theme/%d/%d", tm.ID, i)
@@ -72,13 +78,21 @@ func sendThemePage(w http.ResponseWriter, themeID int64, pageIndex int, s *Sessi
 
 //UserPosts 请求查看某个用户所发的所有的帖子
 func UserPosts(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	userID, _ := strconv.ParseInt(ps.ByName("userID"), 10, 64)
-	pageIndex, _ := strconv.Atoi(ps.ByName("pageIndex"))
+	userID, err := strconv.Atoi(ps.ByName("userID"))
+	if err != nil {
+		sendErrorPage(w, "尝试访问错误的用户")
+		return
+	}
+	pageIndex, err := strconv.Atoi(ps.ByName("pageIndex"))
+	if err != nil {
+		sendErrorPage(w, "尝试访问错误的分页")
+		return
+	}
 	sendUserPostPage(w, userID, pageIndex, getExsitOrCreateNewSession(w, r, true))
 }
 
 //发送用户发帖列表
-func sendUserPostPage(w http.ResponseWriter, userID int64, pageIndex int, s *Session) {
+func sendUserPostPage(w http.ResponseWriter, userID int, pageIndex int, s *Session) {
 	vm := new(themeVM)
 	vm.loginInfo = buildLoginInfo(s)
 	vm.WebTitle = "边缘社区-用户发帖列表"
@@ -96,8 +110,7 @@ func sendUserPostPage(w http.ResponseWriter, userID int64, pageIndex int, s *Ses
 		return
 	}
 	for _, v := range vm.PostHeaders {
-		v.FormatStringTime() //生成文字日期
-		v.FixCmtCount()      //修正评论数量
+		v.FormatShowInfo()
 	}
 	pathBuilder := func(i int) string {
 		return fmt.Sprintf("/User/%d/%d", userID, i)

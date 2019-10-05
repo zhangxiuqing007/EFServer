@@ -1,8 +1,13 @@
 package controller
 
+import (
+	"fmt"
+	"net/http"
+)
+
 type loginInfo struct {
 	IsLogin  bool
-	UserID   int64
+	UserID   int
 	UserName string
 }
 
@@ -63,15 +68,25 @@ func getNaviPageIndexs(
 
 //限制页索引
 func limitPageIndex(currentIndex int, countOnePage int, totalCount int) int {
-	if currentIndex < 0 {
-		currentIndex = 0
-	}
-	maxIndex := totalCount/countOnePage - 1
-	if totalCount%countOnePage != 0 {
-		maxIndex++
-	}
+	maxIndex := totalCount / countOnePage
 	if currentIndex > maxIndex {
 		currentIndex = maxIndex
 	}
+	if currentIndex < 0 {
+		currentIndex = 0
+	}
 	return currentIndex
+}
+
+//请求的统一捕获异常处理函数
+func recoverErrAndSendErrorPage(w http.ResponseWriter) {
+	if err := recover(); err != nil {
+		sendErrorPage(w, fmt.Sprintf("操作失败 %v", err))
+	}
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

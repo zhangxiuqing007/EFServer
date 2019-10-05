@@ -44,36 +44,27 @@ func getExsitSession(r *http.Request) *Session {
 }
 
 func getExsitOrCreateNewSession(w http.ResponseWriter, r *http.Request, recordTime bool) *Session {
-	session := getExsitSession(r)
-	if session == nil {
-		session = createNewSession()
-		http.SetCookie(w, &http.Cookie{
-			Name:     cookieKey,
-			Value:    session.UUID,
-			HttpOnly: true,
-			Path:     "/",
-		})
-		http.SetCookie(w, &http.Cookie{
-			Name:     cookieKey,
-			Value:    session.UUID,
-			HttpOnly: true,
-			Path:     "/Theme",
-		})
-		http.SetCookie(w, &http.Cookie{
-			Name:     cookieKey,
-			Value:    session.UUID,
-			HttpOnly: true,
-			Path:     "/Post",
-		})
-		http.SetCookie(w, &http.Cookie{
-			Name:     cookieKey,
-			Value:    session.UUID,
-			HttpOnly: true,
-			Path:     "/User",
-		})
+	s := getExsitSession(r)
+	if s == nil {
+		s = createNewSession()
+		setCookie := func(path string) {
+			http.SetCookie(w, &http.Cookie{
+				Name:     cookieKey,
+				Value:    s.UUID,
+				HttpOnly: true,
+				Path:     path,
+			})
+		}
+		setCookie("/")
+		setCookie("/Theme")
+		setCookie("/User")
+		setCookie("/Post")
+		setCookie("/Cmt")
+		setCookie("/NewPostInput")
+		setCookie("/NewPostCommit")
 	}
 	if recordTime {
-		session.LastRequestTime = time.Now().UnixNano()
+		s.LastRequestTime = time.Now().UnixNano()
 	}
-	return session
+	return s
 }

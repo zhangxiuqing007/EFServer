@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	fmt.Println("启动程序...")
+	fmt.Println("正在启动程序...")
 	const mysql = true
 	var sqlIns usecase.IDataIO
 	if mysql {
@@ -31,15 +31,32 @@ func main() {
 	//URL路由
 	router := httprouter.New()
 	router.GET("/", controller.Index)
+
 	router.GET("/UserRegist", controller.UserRegist)
-	router.GET("/UserRegistCommit", controller.UserRegistCommit)
+	router.POST("/UserRegistCommit", controller.UserRegistCommit)
+
 	router.GET("/Login", controller.Login)
-	router.GET("/LoginCommit", controller.LoginCommit)
+	router.POST("/LoginCommit", controller.LoginCommit)
+
 	router.GET("/Exit", controller.Exit)
+
 	router.GET("/Theme/:themeID/:pageIndex", controller.Theme)
+
 	router.GET("/User/:userID", controller.UserInfo)
 	router.GET("/User/:userID/:pageIndex", controller.UserPosts)
-	router.GET("/Post/:postID/:pageIndex", controller.PostInfo)
+
+	router.GET("/Post/Content/:postID/:pageIndex", controller.PostInfo)
+	router.GET("/Post/TitleEdit/:postID", controller.PostTitleEdit)
+	router.POST("/Post/TitleEditSubmit", controller.PostTitleEditCommit)
+
+	router.GET("/NewPostInput/:themeID", controller.NewPostInput)
+	router.POST("/NewPostCommit", controller.NewPostCommit)
+
+	router.POST("/Cmt", controller.Cmt)
+	router.GET("/Cmt/Edit/:cmtID/:cmtPageIndex", controller.CmtEdit)
+	router.POST("/Cmt/EditSubmit", controller.CmtEditCommit)
+	router.POST("/Cmt/PG", controller.CmtPb)
+
 	fmt.Println("开始监听HTTP请求...")
 	if err := http.ListenAndServe("localhost:15856", router); err != nil {
 		fmt.Print("程序启动失败：" + err.Error())

@@ -15,18 +15,18 @@ type SqliteIns struct {
 //Open 打开
 func (s *SqliteIns) Open(dbFilePath string) error {
 	var err error
-	s.db, err = sql.Open("sqlite3", dbFilePath)
+	s.DB, err = sql.Open("sqlite3", dbFilePath)
 	return err
 }
 
 //Clear 清空
 func (s *SqliteIns) Clear() error {
 	const sqlStrToClear = `
-delete from cmt;
-delete from post;
-delete from theme;
-delete from user;
+delete from tb_cmt;
+delete from tb_post;
+delete from tb_theme;
+delete from tb_user;
 vacuum;`
-	_, err := s.db.Exec(sqlStrToClear)
+	_, err := s.Exec(sqlStrToClear)
 	return err
 }
